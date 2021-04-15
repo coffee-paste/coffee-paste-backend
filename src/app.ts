@@ -2,6 +2,13 @@ import express, { Response as ExResponse, Request as ExRequest } from "express";
 import bodyParser from "body-parser";
 import { RegisterRoutes } from "./routes";
 import swaggerUi from "swagger-ui-express";
+import * as dotenv from 'dotenv';
+import { existsSync } from 'fs';
+
+// load environment variable from .env file
+if (existsSync('.env')) {
+  dotenv.config();
+}
 
 export const app = express();
 

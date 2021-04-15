@@ -6,6 +6,10 @@
   "scripts": {
     "build": "tsoa spec-and-routes && tsc",
     "start": "node dist/server.js",
+    "dev": "npm run build && npm run start",
+    "typeorm": "ts-node ./node_modules/typeorm/cli.js",
+    "migrate": "npm run typeorm -- migration:run",
+    "migrate:revert": "npm run typeorm -- migration:revert",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -20,13 +24,19 @@
   "homepage": "https://github.com/coffee-paste/coffee-paste-backend#readme",
   "dependencies": {
     "body-parser": "^1.19.0",
+    "dotenv": "^8.2.0",
     "express": "^4.17.1",
+    "log4js": "^6.3.0",
+    "mongodb": "^3.6.6",
+    "reflect-metadata": "^0.1.13",
     "swagger-ui-express": "^4.1.6",
-    "tsoa": "^3.6.1"
+    "tsoa": "^3.6.1",
+    "typeorm": "^0.2.32"
   },
   "devDependencies": {
     "@types/body-parser": "^1.19.0",
     "@types/express": "^4.17.11",
+    "@types/mongodb": "^3.6.12",
     "@types/node": "^14.14.37",
     "@types/swagger-ui-express": "^4.1.2",
     "typescript": "^4.2.4"

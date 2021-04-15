@@ -1,0 +1,46 @@
+import { Note, User } from "../models";
+import { createNoteData, getBacklogNotesData, getOpenNotesData, removeNoteFromUserOpenNotesData, addNoteToUserOpenNotesData, deleteNoteData } from "../data";
+import { logger, NoteStatus } from "../core";
+
+export class NotesService {
+
+  public async getOpenNotes(userId: string): Promise<Note[]> {
+    logger.info(`[NotesService.getOpenNotes] About to get all user "${userId}" workspace notes ...`);
+    const notes = await getOpenNotesData(userId);
+    logger.info(`[NotesService.getOpenNotes] Getting all user "${userId}" workspace notes succeed`);
+    return notes;
+  }
+
+  public async getBacklogNotes(userId: string): Promise<Note[]> {
+    logger.info(`[NotesService.getBacklogNotes] About to get all user "${userId}" backlog notes ...`);
+    const notes = await getBacklogNotesData(userId);
+    logger.info(`[NotesService.getBacklogNotes] Getting all user "${userId}" backlog notes succeed`);
+    return notes;
+  }
+
+  public async createNote(userId: string): Promise<string> {
+    logger.info(`[NotesService.createNote] About to create a new note for user "${userId}"...`);
+    const noteId = await createNoteData(userId);
+    logger.info(`[NotesService.createNote] Create a new note for user "${userId}" succeed`);
+    return noteId;
+  }
+
+  public async setNote(noteId: string, status: NoteStatus, userId: string) {
+    logger.info(`[NotesService.setNote] About to set note "${noteId}" of user "${userId}" statue "${status}"...`);
+    switch (status) {
+      case NoteStatus.Workspace:
+        await addNoteToUserOpenNotesData(userId, noteId);
+        break;
+      case NoteStatus.Backlog:
+        await removeNoteFromUserOpenNotesData(userId, noteId);
+        break;
+    }
+    logger.info(`[NotesService.setNote] Setting note "${noteId}" of user "${userId}" statue "${status}" succeed`);
+  }
+
+  public async deleteNotes(noteId: string, userId: string) {
+    logger.info(`[NotesService.deleteNotes] About to delete note "${noteId}" of user "${userId}"`);
+    await deleteNoteData(noteId, userId);
+    logger.info(`[NotesService.deleteNotes] Deleting note "${noteId}" of user "${userId}" succeed`);
+  }
+}
