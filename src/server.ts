@@ -1,7 +1,18 @@
+import { createConnection } from "typeorm";
 import { app } from "./app";
 
 const port = process.env.PORT || 3000;
 
 app.listen(port, () =>
-    console.log(`Example app listening at http://localhost:${port}`)
+    console.log(`coffee-paste app listening at http://0.0.0.0:${port}`)
 );
+
+(async () => {
+    try {
+        await createConnection();
+        console.info('successfully connected to DB.');
+    } catch (error) {
+        console.error('DB connection failed, exiting...', error);
+        process.exit();
+    }
+})();
