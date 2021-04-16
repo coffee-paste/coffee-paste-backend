@@ -1,3 +1,10 @@
+import * as dotenv from 'dotenv';
+import { existsSync } from 'fs';
+// load environment variable from .env file before all
+if (existsSync('.env')) {
+    dotenv.config();
+}
+
 import { createConnection } from "typeorm";
 import { app } from "./app";
 

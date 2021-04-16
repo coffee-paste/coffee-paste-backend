@@ -11,19 +11,28 @@ export class User {
     id: string;
 
     /**
+     * The user unique email
+     * TODO: add index
+     */
+    @Column()
+    email: string;
+
+    /**
      * The user display name
      */
     @Column()
     displayName: string;
-
-    @Column()
-    oauthInfo?: string;
 
     /**
      * The open notes (user workspace) collection
      */
     @Column()
     openNotes: string[];
+
+    constructor(email: string, displayName: string) {
+        this.email = email;
+        this.displayName = displayName;
+    }
 
     /**
      * After any action, convert  ObjectIDs (as it stored in the DB) to strings
