@@ -10,36 +10,46 @@ import {
   Header,
   SuccessResponse,
   Delete,
+  Security,
+  Request,
+  Tags,
 } from "tsoa";
 import { NoteStatus } from "../core";
 import { Note } from "../models";
 import { NotesService } from "../services";
+import express, { Response as ExResponse, Request as ExRequest } from "express";
 
+@Tags('Notes')
 @Route("notes")
 export class NotesController extends Controller {
 
+  @Security('jwt', ['user'])
   @Post("/")
-  public async createNotes(@Header() userId: string): Promise<string> {
-    return await new NotesService().createNote(userId);
+  public async createNotes(@Request() request: ExRequest): Promise<string> {
+    return await new NotesService().createNote(request.user.userId);
   }
 
+  @Security('jwt', ['user'])
   @Put("/status/{noteId}")
-  public async setNotes(@Path() noteId: string, @Header() userId: string, @Body() setNote: { status: NoteStatus } ) {
-    return await new NotesService().setNote(noteId, setNote.status , userId);
+  public async setNotes(@Request() request: ExRequest, @Path() noteId: string, @Body() setNote: { status: NoteStatus }) {
+    return await new NotesService().setNote(noteId, setNote.status, request.user.userId);
   }
 
+  @Security('jwt', ['user'])
   @Delete("/{noteId}")
-  public async deleteNotes(@Path() noteId: string, @Header() userId: string) {
-    return await new NotesService().deleteNotes(noteId, userId);
+  public async deleteNotes(@Request() request: ExRequest, @Path() noteId: string) {
+    return await new NotesService().deleteNotes(noteId, request.user.userId);
   }
 
+  @Security('jwt', ['user'])
   @Get("/workspace")
-  public async getOpenNotes(@Header() userId: string): Promise<Note[]> {
-    return await new NotesService().getOpenNotes(userId);
+  public async getOpenNotes(@Request() request: ExRequest): Promise<Note[]> {
+    return await new NotesService().getOpenNotes(request.user.userId);
   }
 
+  @Security('jwt', ['user'])
   @Get("/backlog")
-  public async getBacklogNotes(@Header() userId: string): Promise<Note[]> {
-    return await new NotesService().getBacklogNotes(userId);
+  public async getBacklogNotes(@Request() request: ExRequest): Promise<Note[]> {
+    return await new NotesService().getBacklogNotes(request.user.userId);
   }
 }

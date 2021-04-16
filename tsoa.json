@@ -1,12 +1,22 @@
 {
-    "entryFile": "src/app.ts",
-    "noImplicitAdditionalProperties": "throw-on-extras",
-    "controllerPathGlobs": ["src/**/*controller.ts"],
-    "spec": {
-      "outputDirectory": "src",
-      "specVersion": 3
+  "entryFile": "src/app.ts",
+  "noImplicitAdditionalProperties": "throw-on-extras",
+  "controllerPathGlobs": [
+    "src/**/*controller.ts"
+  ],
+  "spec": {
+    "securityDefinitions": {
+      "jwt": {
+        "type": "apiKey",
+        "name": "authentication",
+        "in": "header"
+      }
     },
-    "routes": {
-      "routesDir": "src/routes"
-    }
+    "outputDirectory": "src",
+    "specVersion": 3
+  },
+  "routes": {
+    "authenticationModule": "src/security/authentication.ts",
+    "routesDir": "src/routes"
   }
+}

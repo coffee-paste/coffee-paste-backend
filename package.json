@@ -24,10 +24,13 @@
   "homepage": "https://github.com/coffee-paste/coffee-paste-backend#readme",
   "dependencies": {
     "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
+    "jsonwebtoken": "^8.5.1",
     "log4js": "^6.3.0",
     "mongodb": "^3.6.6",
+    "node-fetch": "^2.6.1",
     "reflect-metadata": "^0.1.13",
     "swagger-ui-express": "^4.1.6",
     "tsoa": "^3.6.1",
@@ -35,9 +38,12 @@
   },
   "devDependencies": {
     "@types/body-parser": "^1.19.0",
+    "@types/cors": "^2.8.10",
     "@types/express": "^4.17.11",
+    "@types/jsonwebtoken": "^8.5.1",
     "@types/mongodb": "^3.6.12",
     "@types/node": "^14.14.37",
+    "@types/node-fetch": "^2.5.10",
     "@types/swagger-ui-express": "^4.1.2",
     "typescript": "^4.2.4"
   }
