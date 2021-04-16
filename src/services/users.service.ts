@@ -1,5 +1,5 @@
 import { Note, User } from "../models";
-import { getUserData, getUsersData } from "../data";
+import { deleteUserData, getUserData, getUsersData } from "../data";
 import { logger } from "../core";
 
 // A post request should not contain an id.
@@ -19,5 +19,11 @@ export class UsersService {
     const users = await getUsersData();
     logger.info(`[UsersService.getUsers] Getting all users info succeed`);
     return users;
+  }
+
+  public async deleteUser(id: string) {
+    logger.info(`[UsersService.deleteUser] About to get all users info ...`);
+    await deleteUserData(id);
+    logger.info(`[UsersService.deleteUser] Getting all users info succeed`);
   }
 }

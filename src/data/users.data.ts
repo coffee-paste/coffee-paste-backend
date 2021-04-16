@@ -1,6 +1,6 @@
 import { getMongoRepository, ObjectID } from "typeorm";
 import { logger } from "../core";
-import { User } from "../models";
+import { Note, User } from "../models";
 
 export async function getUserData(id: string): Promise<User> {
     logger.info(`[users.data.getUserData] About to fetch user "${id}" info ...`);
@@ -96,3 +96,28 @@ export async function createOrSetUserData(email: string, displayName: string): P
     return newUser.id;
 }
 
+/**
+ * Remove user from the system, include all his info. 
+ * @param userId 
+ */
+export async function deleteUserData(userId: string) {
+    logger.info(`[users.data.deleteUserData] About to remove all user "${userId}" data from system ...`);
+   
+    const usersRepository = getMongoRepository(User);
+    // First get user object
+    const user = await getUserData(userId);
+
+    const notesRepository = getMongoRepository(Note);
+    logger.info(`[users.data.deleteUserData] About to fetch & delete user "${userId}" notes ...`);
+    const notes = await notesRepository.find({
+        where: {
+            userId: user.toObjectId(),
+        }
+    });
+    await notesRepository.remove(notes);
+    logger.info(`[users.data.deleteUserData] Delete user "${userId}" notes succeed`);
+    
+    logger.info(`[users.data.deleteUserData] About to delete user "${userId}" ...`);
+    await usersRepository.remove(user);
+    logger.info(`[users.data.deleteUserData] Delete user "${userId}" succeed`);
+}
