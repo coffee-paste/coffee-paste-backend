@@ -3,7 +3,19 @@ import { createOrSetUserData, getUserData, getUsersData } from "../data";
 import { logger } from "../core";
 import * as jwt from 'jsonwebtoken';
 import fetch from 'node-fetch';
-import { jwtSecret } from "../security/authentication";
+import { JWT_SECRET } from "../security/authentication";
+
+export const GITHUB_SECRET = process.env.GITHUB_SECRET || '';
+if (!GITHUB_SECRET) {
+  logger.fatal('You must set the GITHUB_SECRET!');
+  process.exit();
+}
+
+export const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID || '';
+if (!GITHUB_CLIENT_ID) {
+  logger.fatal('You must set the GITHUB_CLIENT_ID!');
+  process.exit();
+}
 
 const jwtExpiresIn = process.env.JWT_EXPIRES_IN || '2 days';
 
@@ -16,8 +28,8 @@ export class AuthService {
     logger.info(`[AuthService.authByGithub] About to login user using code "${oAuthCode}" ...`);
 
     const body: any = {
-      client_id: process.env.GITHUB_CLIENT_ID,
-      client_secret: process.env.GITHUB_SECRETE,
+      client_id: GITHUB_CLIENT_ID,
+      client_secret: GITHUB_SECRET,
       code: oAuthCode,
     };
     const getTokenOption = {
@@ -62,7 +74,7 @@ export class AuthService {
           email: infoPayload.email,
           displayName: infoPayload.name,
         },
-        jwtSecret,
+        JWT_SECRET,
         {
           expiresIn: jwtExpiresIn,
         },
