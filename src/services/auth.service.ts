@@ -22,7 +22,7 @@ const jwtExpiresIn = process.env.JWT_EXPIRES_IN || '2 days';
 // A post request should not contain an id.
 // export type UserCreationParams = Pick<User, "email" | "name" | "phoneNumbers">;
 
-export class AuthService {
+class AuthService {
 
   public async authByGithub(oAuthCode: string): Promise<string> {
     logger.info(`[AuthService.authByGithub] About to login user using code "${oAuthCode}" ...`);
@@ -61,25 +61,25 @@ export class AuthService {
       };
 
       const infoResponse = await fetch('https://api.github.com/user', getInfoOption);
-      const infoPayload = await infoResponse.json() as { email: string, name: string };
+      const { email, name } = await infoResponse.json() as { email: string, name: string };
 
       logger.info(`[AuthService.authByGithub] Getting user info for code "${oAuthCode}"  succeed`);
-      logger.info(`[AuthService.authByGithub] About to set user in system for code "${oAuthCode}" email "${infoPayload}"  ...`);
+      logger.info(`[AuthService.authByGithub] About to set user in system for code "${oAuthCode}" email "${email}"  ...`);
 
-      const userId = await createOrSetUserData(infoPayload.email, infoPayload.name);
+      const userId = await createOrSetUserData(email,name );
 
       const jwtToken = jwt.sign(
         {
           userId,
-          email: infoPayload.email,
-          displayName: infoPayload.name,
+          email,
+          displayName: name,
         },
         JWT_SECRET,
         {
           expiresIn: jwtExpiresIn,
         },
       );
-      logger.info(`[AuthService.authByGithub] Setting user "${userId}" in system for code "${oAuthCode}" email "${infoPayload}" succeed, login proses successfully done`);
+      logger.info(`[AuthService.authByGithub] Setting user "${userId}" in system for code "${oAuthCode}" email "${email}" succeed, login proses successfully done`);
       return jwtToken;
 
     } catch (error) {
@@ -89,3 +89,5 @@ export class AuthService {
     }
   }
 }
+
+export const authService = new AuthService();

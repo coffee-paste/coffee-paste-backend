@@ -1,7 +1,8 @@
 import { getMongoRepository } from "typeorm";
 import { logger } from "../core";
 import { Note, User } from "../models";
-import { getUserData, removeNoteFromUserOpenNotesData, addNoteToUserOpenNotesData } from "./users.data";
+import { getUserData, removeNoteFromUserOpenNotesData, addNoteToUserOpenNotesData, getOpenNotesLazyData } from "./users.data";
+import * as mongodb from "mongodb";
 
 export async function getOpenNotesData(userId: string): Promise<Note[]> {
     logger.info(`[notes.data.getOpenNotesData] About to fetch all workspace notes for user "${userId}"...`);
@@ -73,4 +74,35 @@ export async function deleteNoteData(noteId: string, userId: string) {
         throw error;
     }
     logger.info(`[notes.data.deleteNoteData] Delete the note "${noteId}" of user "${userId}" succeed`);
+}
+
+export async function setOpenNoteContentData(noteId: string, userId: string, contentText: string, contentHTML: string) {
+    logger.info(`[notes.data.setNoteContentData] About to update the note "${noteId}" content ...`);
+
+    const openNotes = await getOpenNotesLazyData(userId);
+
+    if (!openNotes?.includes(noteId)) {
+        throw new Error(`note "${noteId}" isn't in the user "${userId}" workspace`)
+    }
+
+    const notesRepository = getMongoRepository(Note);
+    await notesRepository.update({ id: new mongodb.ObjectID(noteId) as any }, {
+        contentHTML,
+        contentText,
+    });
+    logger.info(`[notes.data.setNoteContentData] About to update the note "${noteId}" content succeed`);
+}
+
+export async function setNoteContentData(noteId: string, userId: string, contentText: string, contentHTML: string) {
+    logger.info(`[notes.data.setNoteContentData] About to update the note "${noteId}" content ...`);
+
+    const notesRepository = getMongoRepository(Note);
+    await notesRepository.update({ 
+        id: new mongodb.ObjectID(noteId) as any,
+        userId :  new mongodb.ObjectID(userId) as any
+     }, {
+        contentHTML,
+        contentText
+    });
+    logger.info(`[notes.data.setNoteContentData] About to update the note "${noteId}" content succeed`);
 }

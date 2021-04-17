@@ -2,11 +2,21 @@ import { getMongoRepository, ObjectID } from "typeorm";
 import { logger } from "../core";
 import { Note, User } from "../models";
 
-export async function getUserData(id: string): Promise<User> {
-    logger.info(`[users.data.getUserData] About to fetch user "${id}" info ...`);
+/**
+ * Hold last known open-notes cache map by userId.
+ * USed to avoid request for user info before updating workspace only notes 
+ */
+const userOpenNotesCache: {
+    [key: string]: string[]
+} = {};
+
+export async function getUserData(userId: string): Promise<User> {
+    logger.info(`[users.data.getUserData] About to fetch user "${userId}" info ...`);
     const usersRepository = getMongoRepository(User);
-    const user = await usersRepository.findOneOrFail(id);
-    logger.info(`[users.data.getUserData] Fetch user "${id}" info succeed`);
+    const user = await usersRepository.findOneOrFail(userId);
+    logger.info(`[users.data.getUserData] Fetch user "${userId}" info succeed`);
+    // Update user workspace cache 
+    userOpenNotesCache[userId] = user.openNotes;
     return user;
 }
 
@@ -38,6 +48,8 @@ export async function addNoteToUserOpenNotesData(userId: string, noteId: string)
     const usersRepository = getMongoRepository(User);
     // Save change
     await usersRepository.update({ id: user.toObjectId() as any }, { openNotes: user.toOpenNoteObjectIDs() as any[] });
+    // Update user workspace cache 
+    userOpenNotesCache[userId] = user.openNotes;
     logger.info(`[users.data.addNoteToUserOpenNotesData] Setting note "${noteId}" as open note for user "${userId}" succeed`);
 }
 
@@ -66,6 +78,8 @@ export async function removeNoteFromUserOpenNotesData(userId: string, noteId: st
 
     // Save change
     await usersRepository.update({ id: user.toObjectId() as any }, { openNotes: user.toOpenNoteObjectIDs() as any[] });
+    // Update user workspace cache 
+    userOpenNotesCache[userId] = user.openNotes;
     logger.info(`[users.data.removeNoteFromUserOpenNotesData] Remove note "${noteId}" from the open note of user "${userId}" succeed`);
 }
 
@@ -86,12 +100,17 @@ export async function createOrSetUserData(email: string, displayName: string): P
             logger.info(`[users.data.createOrSetUser] Setting  "${existUser.id}" "${email}" name "${displayName}" succeed`);
         }
         logger.info(`[users.data.createOrSetUser] User  "${existUser.id}" "${email}" exists`);
+        // Update user workspace cache 
+        userOpenNotesCache[existUser.id] = existUser.openNotes;
         return existUser.id;
     }
 
     logger.info(`[users.data.createOrSetUser] About to create a new user for "${email}" ...`);
     const user = new User(email, displayName);
     const newUser = await usersRepository.save(user);
+
+    // Set user workspace cache 
+    userOpenNotesCache[newUser.id] = [];
     logger.info(`[users.data.createOrSetUser] Create user "${newUser.id}" for "${email}" successfully`);
     return newUser.id;
 }
@@ -102,7 +121,10 @@ export async function createOrSetUserData(email: string, displayName: string): P
  */
 export async function deleteUserData(userId: string) {
     logger.info(`[users.data.deleteUserData] About to remove all user "${userId}" data from system ...`);
-   
+
+    // Clean the workspace cache data
+    delete userOpenNotesCache[userId];
+
     const usersRepository = getMongoRepository(User);
     // First get user object
     const user = await getUserData(userId);
@@ -116,8 +138,20 @@ export async function deleteUserData(userId: string) {
     });
     await notesRepository.remove(notes);
     logger.info(`[users.data.deleteUserData] Delete user "${userId}" notes succeed`);
-    
+
     logger.info(`[users.data.deleteUserData] About to delete user "${userId}" ...`);
     await usersRepository.remove(user);
     logger.info(`[users.data.deleteUserData] Delete user "${userId}" succeed`);
+}
+
+export async function getOpenNotesLazyData(userId: string): Promise<string[]> {
+    logger.info(`[users.data.getOpenNotesLazyData] Looking for "${userId}" open notes...`);
+    if (userId in userOpenNotesCache) {
+        logger.info(`[users.data.getOpenNotesLazyData] "${userId}" open notes cached, returning saved cache`);
+        return userOpenNotesCache[userId];
+    }
+    const user = await getUserData(userId);
+    const openNotes = userOpenNotesCache[userId] = user.openNotes;
+    logger.info(`[users.data.getOpenNotesLazyData] Loading "${userId}" current open notes done, and cached`);
+    return openNotes;
 }

@@ -10,7 +10,7 @@ import {
   Tags,
 } from "tsoa";
 import { Auth } from "../core";
-import { AuthService } from "../services";
+import { authService } from "../services";
 
 @Tags('Authentication')
 @Route("auth")
@@ -22,7 +22,7 @@ export class AuthController extends Controller {
    */
   @Post("/github")
   public async authByGithub(@Body() body : Auth) {
-    const jwtToken = await new AuthService().authByGithub(body.code);
+    const jwtToken = await authService.authByGithub(body.code);
     this.setHeader('Authentication', jwtToken);
   }
 }

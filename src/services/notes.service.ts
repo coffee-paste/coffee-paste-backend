@@ -1,8 +1,8 @@
 import { Note, User } from "../models";
-import { createNoteData, getBacklogNotesData, getOpenNotesData, removeNoteFromUserOpenNotesData, addNoteToUserOpenNotesData, deleteNoteData } from "../data";
+import { createNoteData, getBacklogNotesData, getOpenNotesData, removeNoteFromUserOpenNotesData, addNoteToUserOpenNotesData, deleteNoteData, setNoteContentData, setOpenNoteContentData } from "../data";
 import { logger, NoteStatus } from "../core";
 
-export class NotesService {
+class NotesService {
 
   public async getOpenNotes(userId: string): Promise<Note[]> {
     logger.info(`[NotesService.getOpenNotes] About to get all user "${userId}" workspace notes ...`);
@@ -25,8 +25,8 @@ export class NotesService {
     return noteId;
   }
 
-  public async setNote(noteId: string, status: NoteStatus, userId: string) {
-    logger.info(`[NotesService.setNote] About to set note "${noteId}" of user "${userId}" statue "${status}"...`);
+  public async setNoteStatus(noteId: string, status: NoteStatus, userId: string) {
+    logger.info(`[NotesService.setNoteStatus] About to set note "${noteId}" of user "${userId}" statue "${status}"...`);
     switch (status) {
       case NoteStatus.Workspace:
         await addNoteToUserOpenNotesData(userId, noteId);
@@ -35,7 +35,7 @@ export class NotesService {
         await removeNoteFromUserOpenNotesData(userId, noteId);
         break;
     }
-    logger.info(`[NotesService.setNote] Setting note "${noteId}" of user "${userId}" statue "${status}" succeed`);
+    logger.info(`[NotesService.setNoteStatus] Setting note "${noteId}" of user "${userId}" statue "${status}" succeed`);
   }
 
   public async deleteNotes(noteId: string, userId: string) {
@@ -43,4 +43,18 @@ export class NotesService {
     await deleteNoteData(noteId, userId);
     logger.info(`[NotesService.deleteNotes] Deleting note "${noteId}" of user "${userId}" succeed`);
   }
+
+  public async setOpenNoteContent(noteId: string, userId: string, contentText: string, contentHTML: string) {
+    logger.info(`[NotesService.setOpenNoteContent] About to set note "${noteId}" a new content...`);
+    await setOpenNoteContentData(noteId, userId, contentText, contentHTML);
+    logger.info(`[NotesService.setOpenNoteContent] Setting note "${noteId}" a new content succeed`);
+  }
+
+  public async setNoteContent(noteId: string, userId: string, contentText: string, contentHTML: string) {
+    logger.info(`[NotesService.setNoteContent] About to set note "${noteId}" a new content...`);
+    await setNoteContentData(noteId, userId, contentText, contentHTML);
+    logger.info(`[NotesService.setNoteContent] Setting note "${noteId}" a new content succeed`);
+  }
 }
+
+export const notesService = new NotesService();
