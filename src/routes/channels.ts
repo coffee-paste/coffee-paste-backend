@@ -3,14 +3,29 @@ import WebSocket from 'ws';
 import express, { Response as ExResponse, Request as ExRequest } from "express";
 import { notesService } from '../services'
 import * as uuid from 'uuid';
+import { Duration } from 'unitsnet-js';
+import debounce from 'lodash.debounce';
 import { IncomingNoteUpdate, logger, NoteUpdate, VerifiedWebSocket } from '../core';
 import { incomingNoteUpdateSchema, schemaValidator, verifyJwtToken } from '../security';
 
+/** Time to await for DB update till last note update  */
+const DEBOUNCE_NOTES_CHANGES_UPDATE = Duration.FromSeconds(20);
 /**
  * The channels collection map by userIds
  */
 const notesChannels: {
     [key: string]: VerifiedWebSocket[];
+} = {};
+
+// TODO: use TTL cache for it
+const usersUpdateDebounce: {
+    [key: string]: {
+        debounceFunc: () => void;
+        lastState: {
+            contentText: string;
+            contentHTML: string;
+        }
+    }
 } = {};
 
 async function removeChannel(verifiedWebSocket: VerifiedWebSocket) {
@@ -57,6 +72,45 @@ async function broadcastNote(userId: string, channelId: string, noteUpdate: Note
     logger.info(`[channels.broadcastNote] broadcasting note "${noteUpdate.noteId}" of user "${userId}" done`)
 }
 
+/**
+ * In order to keep DB performance, implement debounce logic to update DB only X time after updating note finished  
+ */
+async function saveNoteUpdateDebounced(noteId: string, userId: string, contentText: string, contentHTML: string) {
+
+    // If a debounce for the note not exists yet, create one for it.
+    if (!usersUpdateDebounce[noteId]) {
+        // Create the debounce function
+        const debounceFunc = debounce(() => {
+            (async () => {
+                // If the state not exists, abort update
+                if (!usersUpdateDebounce[noteId]) {
+                    return;
+                }
+                try {
+                    // Save the last state of the note in the DB
+                    await notesService.setOpenNoteContent(noteId, userId, usersUpdateDebounce[noteId].lastState.contentText, usersUpdateDebounce[noteId].lastState.contentHTML);
+                } catch (error) {
+                    logger.error(`[channels.saveUpdateDebounced] invoking setOpenNoteContent for noteId ${noteId} failed `)
+                }
+            })();
+        }, DEBOUNCE_NOTES_CHANGES_UPDATE.Milliseconds) as unknown as () => void;
+        usersUpdateDebounce[noteId] = {
+            debounceFunc,
+            lastState: {
+                contentHTML,
+                contentText,
+            }
+        };
+    }
+    // Keep the current note state
+    usersUpdateDebounce[noteId].lastState = {
+        contentHTML,
+        contentText
+    }
+    // Call to the debounceFunc
+    usersUpdateDebounce[noteId].debounceFunc();
+}
+
 async function handleIncomingChannel(verifiedWebSocket: VerifiedWebSocket) {
     const userId = verifiedWebSocket.user.userId;
     logger.info(`[channels.handleIncomingChannel] adding channel "${verifiedWebSocket.id}" to the user "${userId}" collection`)
@@ -74,7 +128,9 @@ async function handleIncomingChannel(verifiedWebSocket: VerifiedWebSocket) {
             const incomingNoteUpdate = await schemaValidator<IncomingNoteUpdate>(incomingNoteUpdateRaw, incomingNoteUpdateSchema);
 
             const { noteId, contentText, contentHTML } = incomingNoteUpdate;
-            await notesService.setOpenNoteContent(noteId, userId, contentText, contentHTML);
+
+            await saveNoteUpdateDebounced(noteId, userId, contentText, contentHTML);
+
             // After update content succeed, broadcast the new note content
             await broadcastNote(userId, verifiedWebSocket.id, {
                 noteId,
