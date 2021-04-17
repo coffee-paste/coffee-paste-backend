@@ -1,24 +1,31 @@
-import { User } from "../models";
+import { Note, User } from "../models";
+import { deleteUserData, getUserData, getUsersData } from "../data";
+import { logger } from "../core";
 
 // A post request should not contain an id.
-export type UserCreationParams = Pick<User, "email" | "name" | "phoneNumbers">;
+// export type UserCreationParams = Pick<User, "email" | "name" | "phoneNumbers">;
 
-export class UsersService {
-  public get(id: number, name?: string): User {
-    return {
-      id,
-      email: "jane@doe.com",
-      name: name ?? "Jane Doe",
-      status: "Happy",
-      phoneNumbers: [],
-    };
+class UsersService {
+
+  public async getUser(id: string): Promise<User> {
+    logger.info(`[UsersService.getUser] About to get user "${id}" info ...`);
+    const user = await getUserData(id);
+    logger.info(`[UsersService.getUser] Getting user "${id}" info succeed`);
+    return user;
   }
 
-  public create(userCreationParams: UserCreationParams): User {
-    return {
-      id: Math.floor(Math.random() * 10000), // Random
-      status: "Happy",
-      ...userCreationParams,
-    };
+  public async getUsers(): Promise<User[]> {
+    logger.info(`[UsersService.getUsers] About to get all users info ...`);
+    const users = await getUsersData();
+    logger.info(`[UsersService.getUsers] Getting all users info succeed`);
+    return users;
+  }
+
+  public async deleteUser(id: string) {
+    logger.info(`[UsersService.deleteUser] About to get all users info ...`);
+    await deleteUserData(id);
+    logger.info(`[UsersService.deleteUser] Getting all users info succeed`);
   }
 }
+
+export const usersService = new UsersService();
