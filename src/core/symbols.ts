@@ -10,12 +10,19 @@ export enum NoteStatus {
     Backlog = 'BACKLOG',
 }
 
+export enum OAuth2Service {
+    GitHub = 'GITHUB',
+    Google = 'GOOGLE',
+}
+
 /**
  * The OAuth2 session
  */
-export interface Auth {
-    /** The session logon code, see https://docs.github.com/en/developers/apps/authorizing-oauth-apps */
+export interface OAuth2Session {
+    /** The session logon code, see https://docs.github.com/en/developers/apps/authorizing-oauth-apps & https://developers.google.com/identity/protocols/oauth2/web-server */
     code: string;
+    redirectUri: string;
+    oauth2Service: OAuth2Service; 
 }
 
 /**

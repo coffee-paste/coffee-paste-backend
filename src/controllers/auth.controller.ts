@@ -9,7 +9,7 @@ import {
   SuccessResponse,
   Tags,
 } from "tsoa";
-import { Auth } from "../core";
+import { OAuth2Session } from "../core";
 import { authService } from "../services";
 
 @Tags('Authentication')
@@ -17,12 +17,12 @@ import { authService } from "../services";
 export class AuthController extends Controller {
 
   /**
-   * Login to service *after* getting the GitHub's OAuth2 code.
-   * @param body The GitHub's session logon code
+   * Login to service *after* getting the authorization service OAuth2 code.
+   * @param body The OAuth logon session
    */
-  @Post("/github")
-  public async authByGithub(@Body() body : Auth) {
-    const jwtToken = await authService.authByGithub(body.code);
+  @Post("/oauth2")
+  public async authByOAuth(@Body() body : OAuth2Session) {
+    const jwtToken = await authService.authByOAuth(body);
     this.setHeader('Authentication', jwtToken);
   }
 }

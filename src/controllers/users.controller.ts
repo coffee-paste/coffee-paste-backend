@@ -12,7 +12,6 @@ import {
   Request,
   Delete,
 } from "tsoa";
-import { Auth } from "../core";
 import { User } from "../models";
 import { usersService } from "../services";
 import express, { Response as ExResponse, Request as ExRequest } from "express";
@@ -38,6 +37,12 @@ export class UsersController extends Controller {
   // public async deleteUserByAdmin(@Path() userId: string) {
   //   return await usersService.deleteUser(userId);
   // }
+
+  @Security('jwt', ['user'])
+  @Get('/profile')
+  public async getUserProfile(@Request() request: ExRequest) {
+    return await usersService.getUser(request.user.userId);
+  }
 
   @Security('jwt', ['user'])
   @Delete()

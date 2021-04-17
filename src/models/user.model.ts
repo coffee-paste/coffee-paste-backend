@@ -24,14 +24,21 @@ export class User {
     displayName: string;
 
     /**
+     * The user avatar as Base64 string
+     */
+     @Column()
+     avatarBase64: string;
+
+    /**
      * The open notes (user workspace) collection
      */
     @Column()
     openNotes: string[];
 
-    constructor(email: string, displayName: string) {
+    constructor(email: string, displayName: string, avatarBase64: string) {
         this.email = email;
         this.displayName = displayName;
+        this.avatarBase64 = avatarBase64;
     }
 
     /**
