@@ -5,7 +5,7 @@ import { logger } from "../core";
 // A post request should not contain an id.
 // export type UserCreationParams = Pick<User, "email" | "name" | "phoneNumbers">;
 
-export class UsersService {
+class UsersService {
 
   public async getUser(id: string): Promise<User> {
     logger.info(`[UsersService.getUser] About to get user "${id}" info ...`);
@@ -27,3 +27,5 @@ export class UsersService {
     logger.info(`[UsersService.deleteUser] Getting all users info succeed`);
   }
 }
+
+export const usersService = new UsersService();

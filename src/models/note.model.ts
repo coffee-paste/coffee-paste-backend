@@ -39,7 +39,7 @@ export class Note {
      * The note content as plain-text
      */
     @Column()
-    contentPlain: string;
+    contentText: string;
 
     /**
      * The note content as HTML
@@ -52,7 +52,7 @@ export class Note {
         const now = new Date().getTime();
         this.creationTime = now;
         this.lastModifiedTime = now;
-        this.contentPlain = '';
+        this.contentText = '';
         this.contentHTML = '';
     }
 
@@ -70,7 +70,7 @@ export class Note {
     @BeforeUpdate()
     @BeforeRemove()
     beforeUpdate() {
-        this.id = new mongodb.ObjectID(this.id) as any;
+        this.id = this.toObjectId() as any;
         this.beforeAction();
     }
 
@@ -83,5 +83,14 @@ export class Note {
     afterLoad() {
         this.id = (this.id as unknown as mongodb.ObjectID).toHexString();
         this.userId = (this.userId as unknown as mongodb.ObjectID)?.toHexString() || this.userId;
+    }
+
+    /**
+     * Get the @see this.id as ObjectID.
+     * Used to convert it before sending it to the DB driver
+     * @returns The @see this.id as ObjectID
+     */
+     public toObjectId(): mongodb.ObjectID {
+        return new mongodb.ObjectID(this.id);
     }
 }
