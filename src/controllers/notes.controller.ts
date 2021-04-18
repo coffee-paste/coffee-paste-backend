@@ -37,8 +37,14 @@ export class NotesController extends Controller {
 
   @Security('jwt', ['user'])
   @Put("/content/{noteId}")
-  public async setNotesContent(@Request() request: ExRequest, @Path() noteId: string, @Body() content: {  contentText: string, contentHTML: string }) {
+  public async setNotesContent(@Request() request: ExRequest, @Path() noteId: string, @Body() content: { contentText: string, contentHTML: string }) {
     return await notesService.setNoteContent(noteId, request.user.userId, content.contentText, content.contentHTML);
+  }
+
+  @Security('jwt', ['user'])
+  @Put("/name/{noteId}")
+  public async setNotesName(@Request() request: ExRequest, @Path() noteId: string, @Body() body: { name: string }) {
+    return await notesService.setNoteName(noteId, request.user.userId, body.name);
   }
 
   @Security('jwt', ['user'])
