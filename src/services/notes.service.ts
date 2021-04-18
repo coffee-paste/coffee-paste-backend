@@ -1,5 +1,5 @@
 import { Note, User } from "../models";
-import { createNoteData, getBacklogNotesData, getOpenNotesData, removeNoteFromUserOpenNotesData, addNoteToUserOpenNotesData, deleteNoteData, setNoteContentData, setOpenNoteContentData } from "../data";
+import { createNoteData, getBacklogNotesData, getOpenNotesData, removeNoteFromUserOpenNotesData, addNoteToUserOpenNotesData, deleteNoteData, setNoteContentData, setOpenNoteContentData, setNoteNameData } from "../data";
 import { logger, notesContentUpdateDebounce, NoteStatus } from "../core";
 
 class NotesService {
@@ -10,8 +10,8 @@ class NotesService {
     // If update arrived from client but not flush yet to the DB, update the workspace notes
     for (const note of notes) {
       const  notesUpdateDebounceInfo = notesContentUpdateDebounce.get(note.id);
-      note.contentHTML = notesUpdateDebounceInfo?.lastState?.contentHTML || note.contentHTML;
-      note.contentText = notesUpdateDebounceInfo?.lastState?.contentText || note.contentText;
+      note.contentHTML = notesUpdateDebounceInfo?.lastState?.contentHTML ?? note.contentHTML;
+      note.contentText = notesUpdateDebounceInfo?.lastState?.contentText ?? note.contentText;
     }
     logger.info(`[NotesService.getOpenNotes] Getting all user "${userId}" workspace notes succeed`);
     return notes;
@@ -59,6 +59,12 @@ class NotesService {
   public async setNoteContent(noteId: string, userId: string, contentText: string, contentHTML: string) {
     logger.info(`[NotesService.setNoteContent] About to set note "${noteId}" a new content...`);
     await setNoteContentData(noteId, userId, contentText, contentHTML);
+    logger.info(`[NotesService.setNoteContent] Setting note "${noteId}" a new content succeed`);
+  }
+
+  public async setNoteName(noteId: string, userId: string, name: string) {
+    logger.info(`[NotesService.setNoteContent] About to set note "${noteId}" a new content...`);
+    await setNoteNameData(noteId, userId, name);
     logger.info(`[NotesService.setNoteContent] Setting note "${noteId}" a new content succeed`);
   }
 }

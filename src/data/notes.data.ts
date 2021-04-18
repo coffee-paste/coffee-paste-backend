@@ -77,7 +77,7 @@ export async function deleteNoteData(noteId: string, userId: string) {
 }
 
 export async function setOpenNoteContentData(noteId: string, userId: string, contentText: string, contentHTML: string) {
-    logger.info(`[notes.data.setNoteContentData] About to update the note "${noteId}" content ...`);
+    logger.info(`[notes.data.setOpenNoteContentData] About to update the note "${noteId}" content ...`);
 
     const openNotes = await getOpenNotesLazyData(userId);
 
@@ -91,7 +91,7 @@ export async function setOpenNoteContentData(noteId: string, userId: string, con
         contentText,
         lastModifiedTime : new Date().getTime(),
     });
-    logger.info(`[notes.data.setNoteContentData] About to update the note "${noteId}" content succeed`);
+    logger.info(`[notes.data.setOpenNoteContentData] Update the note "${noteId}" content succeed`);
 }
 
 export async function setNoteContentData(noteId: string, userId: string, contentText: string, contentHTML: string) {
@@ -106,5 +106,18 @@ export async function setNoteContentData(noteId: string, userId: string, content
         contentText,
         lastModifiedTime : new Date().getTime(),
     });
-    logger.info(`[notes.data.setNoteContentData] About to update the note "${noteId}" content succeed`);
+    logger.info(`[notes.data.setNoteContentData] update the note "${noteId}" content succeed`);
+}
+
+export async function setNoteNameData(noteId: string, userId: string, name: string) {
+    logger.info(`[notes.data.setNoteNameData] About to update the note "${noteId}" name ...`);
+
+    const notesRepository = getMongoRepository(Note);
+    await notesRepository.update({ 
+        id: new mongodb.ObjectID(noteId) as any,
+        userId :  new mongodb.ObjectID(userId) as any
+     }, {
+        name
+    });
+    logger.info(`[notes.data.setNoteNameData] Update the note "${noteId}" name succeed`);
 }
