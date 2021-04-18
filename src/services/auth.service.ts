@@ -28,6 +28,18 @@ if (!GOOGLE_SECRET) {
   process.exit();
 }
 
+export const GITLAB_CLIENT_ID = process.env.GITLAB_CLIENT_ID || '';
+if (!GITLAB_CLIENT_ID) {
+  logger.fatal('You must set the GITLAB_CLIENT_ID!');
+  process.exit();
+}
+
+export const GITLAB_SECRET = process.env.GITLAB_SECRET || '';
+if (!GITLAB_SECRET) {
+  logger.fatal('You must set the GITLAB_SECRET!');
+  process.exit();
+}
+
 const jwtExpiresIn = process.env.JWT_EXPIRES_IN || '2 days';
 
 interface OAuthUserInfo {
@@ -143,6 +155,49 @@ class AuthService {
     }
   }
 
+  private async validateGitLabOAuth2Session(oauth2Session: OAuth2Session): Promise<OAuthUserInfo> {
+
+    const getTokenOption = {
+      method: 'POST',
+      headers: { 'Accept': 'application/json' },
+    };
+
+    logger.info(`[AuthService.validateGitLabOAuth2Session] About to validate user code "${oauth2Session.code}" and get token using GOOGLE's API ...`);
+    const authResponse = await fetch(`https://gitlab.com/oauth/token?client_id=${GITLAB_CLIENT_ID}&client_secret=${GITLAB_SECRET}&code=${oauth2Session.code}&grant_type=authorization_code&redirect_uri=${oauth2Session.redirectUri}`, getTokenOption);
+
+    const authPayload = await authResponse.json() as { access_token: string };
+
+    authPayload.access_token;
+
+    if (!authPayload.access_token) {
+      logger.error(`[AuthService.validateGitLabOAuth2Session] Validate code "${oauth2Session.code}"  failed`, authPayload);
+      throw new Error(JSON.stringify(authPayload));
+    }
+
+    logger.info(`[AuthService.validateGitLabOAuth2Session] Validate and get token for code "${oauth2Session.code}"  successfully`);
+
+    logger.info(`[AuthService.validateGitLabOAuth2Session] About to get user info for code "${oauth2Session.code}"  ...`);
+
+    const getInfoOption = {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${authPayload.access_token}`
+      },
+    };
+
+    const infoResponse = await fetch('https://gitlab.com/api/v4/user', getInfoOption);
+    const { email, name, avatar_url } = await infoResponse.json() as { email: string, name: string, avatar_url: string };
+
+    logger.info(`[AuthService.validateGitLabOAuth2Session] get user info for code "${oauth2Session.code}" user "${email}" successfully`);
+
+    return {
+      email,
+      displayName: name,
+      avatarUrl: avatar_url,
+    }
+  }
+
   public async authByOAuth(oauth2Session: OAuth2Session): Promise<string> {
     logger.info(`[AuthService.authByGithub] About to login user using "${oauth2Session.oauth2Service}" code "${oauth2Session.code}" ...`);
 
@@ -155,6 +210,9 @@ class AuthService {
           break;
         case OAuth2Service.Google:
           userInfo = await this.validateGoogleOAuth2Session(oauth2Session);
+          break;
+        case OAuth2Service.GitLab:
+          userInfo = await this.validateGitLabOAuth2Session(oauth2Session);
         default:
           break;
       }
@@ -172,7 +230,7 @@ class AuthService {
       const jwtToken = jwt.sign(
         {
           userId,
-          email : userInfo.email,
+          email: userInfo.email,
           displayName: userInfo.displayName,
         },
         JWT_SECRET,

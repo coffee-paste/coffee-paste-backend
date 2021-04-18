@@ -13,6 +13,7 @@ export enum NoteStatus {
 export enum OAuth2Service {
     GitHub = 'GITHUB',
     Google = 'GOOGLE',
+    GitLab = 'GITLAB',
 }
 
 /**
