@@ -70,6 +70,31 @@ app.get('/.well-known/security.txt', (req, res) => {
         `);
 });
 
+app.get('/privacy-policy.txt', (req, res) => {
+  res.setHeader('Content-type', 'application/octet-stream');
+  res.setHeader('Content-disposition', 'attachment; filename=security.txt');
+  res.send(`
+            This service built as an open-source project at https://github.com/coffee-paste/coffee-paste-backend.
+            Currently, it's a POC for the app, please notice that.
+            Currently, we keep only your email, display name, and your avatar. and the content of the notes.
+            You are able to remove all your info including user info and notes content at any time using the https://coffee-paste.herokuapp.com/docs/#/Users/DeleteUser API.
+            Feel free to as any question at any time https://github.com/haimkastner.
+            Thanks!
+        `);
+});
+
+app.get('/therm-of-use.txt', (req, res) => {
+  res.setHeader('Content-type', 'application/octet-stream');
+  res.setHeader('Content-disposition', 'attachment; filename=security.txt');
+  res.send(`
+            This service built as an open-source project at https://github.com/coffee-paste/coffee-paste-backend.
+            Currently, it's a POC for the app, please notice that.
+            Currently, we offer the use free, please notice that this is only now for the POC time.
+            Feel free to as any question at any time https://github.com/haimkastner.
+            Thanks!
+        `);
+});
+
 // Unknown routing get 404
 app.use('*', (req, res) => {
   res.statusCode = 404;
