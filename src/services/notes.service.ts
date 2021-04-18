@@ -1,12 +1,18 @@
 import { Note, User } from "../models";
 import { createNoteData, getBacklogNotesData, getOpenNotesData, removeNoteFromUserOpenNotesData, addNoteToUserOpenNotesData, deleteNoteData, setNoteContentData, setOpenNoteContentData } from "../data";
-import { logger, NoteStatus } from "../core";
+import { logger, notesContentUpdateDebounce, NoteStatus } from "../core";
 
 class NotesService {
 
-  public async getOpenNotes(userId: string): Promise<Note[]> {
+  public async getWorkspaceNotes(userId: string): Promise<Note[]> {
     logger.info(`[NotesService.getOpenNotes] About to get all user "${userId}" workspace notes ...`);
     const notes = await getOpenNotesData(userId);
+    // If update arrived from client but not flush yet to the DB, update the workspace notes
+    for (const note of notes) {
+      const  notesUpdateDebounceInfo = notesContentUpdateDebounce.get(note.id);
+      note.contentHTML = notesUpdateDebounceInfo?.lastState?.contentHTML || note.contentHTML;
+      note.contentText = notesUpdateDebounceInfo?.lastState?.contentText || note.contentText;
+    }
     logger.info(`[NotesService.getOpenNotes] Getting all user "${userId}" workspace notes succeed`);
     return notes;
   }

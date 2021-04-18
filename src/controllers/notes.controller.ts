@@ -50,7 +50,7 @@ export class NotesController extends Controller {
   @Security('jwt', ['user'])
   @Get("/workspace")
   public async getOpenNotes(@Request() request: ExRequest): Promise<Note[]> {
-    return await notesService.getOpenNotes(request.user.userId);
+    return await notesService.getWorkspaceNotes(request.user.userId);
   }
 
   @Security('jwt', ['user'])
