@@ -10,8 +10,8 @@ class NotesService {
     // If update arrived from client but not flush yet to the DB, update the workspace notes
     for (const note of notes) {
       const  notesUpdateDebounceInfo = notesContentUpdateDebounce.get(note.id);
-      note.contentHTML = notesUpdateDebounceInfo?.lastState?.contentHTML || note.contentHTML;
-      note.contentText = notesUpdateDebounceInfo?.lastState?.contentText || note.contentText;
+      note.contentHTML = notesUpdateDebounceInfo?.lastState?.contentHTML ?? note.contentHTML;
+      note.contentText = notesUpdateDebounceInfo?.lastState?.contentText ?? note.contentText;
     }
     logger.info(`[NotesService.getOpenNotes] Getting all user "${userId}" workspace notes succeed`);
     return notes;
