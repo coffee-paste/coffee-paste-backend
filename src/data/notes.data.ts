@@ -89,6 +89,7 @@ export async function setOpenNoteContentData(noteId: string, userId: string, con
     await notesRepository.update({ id: new mongodb.ObjectID(noteId) as any }, {
         contentHTML,
         contentText,
+        lastModifiedTime : new Date().getTime(),
     });
     logger.info(`[notes.data.setNoteContentData] About to update the note "${noteId}" content succeed`);
 }
@@ -102,7 +103,8 @@ export async function setNoteContentData(noteId: string, userId: string, content
         userId :  new mongodb.ObjectID(userId) as any
      }, {
         contentHTML,
-        contentText
+        contentText,
+        lastModifiedTime : new Date().getTime(),
     });
     logger.info(`[notes.data.setNoteContentData] About to update the note "${noteId}" content succeed`);
 }
