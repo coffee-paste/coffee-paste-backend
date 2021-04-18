@@ -5,7 +5,7 @@ import { notesService } from '../services'
 import * as uuid from 'uuid';
 import { Duration } from 'unitsnet-js';
 import debounce from 'lodash.debounce';
-import { IncomingNoteUpdate, logger, NoteUpdate, VerifiedWebSocket } from '../core';
+import { IncomingNoteUpdate, logger, notesContentUpdateDebounce, NotesUpdateDebounceInfo, NoteUpdate, VerifiedWebSocket } from '../core';
 import { incomingNoteUpdateSchema, schemaValidator, verifyJwtToken } from '../security';
 
 /** Time to await for DB update till last note update  */
@@ -15,17 +15,6 @@ const DEBOUNCE_NOTES_CHANGES_UPDATE = Duration.FromSeconds(20);
  */
 const notesChannels: {
     [key: string]: VerifiedWebSocket[];
-} = {};
-
-// TODO: use TTL cache for it
-const usersUpdateDebounce: {
-    [key: string]: {
-        debounceFunc: () => void;
-        lastState: {
-            contentText: string;
-            contentHTML: string;
-        }
-    }
 } = {};
 
 async function removeChannel(verifiedWebSocket: VerifiedWebSocket) {
@@ -77,38 +66,51 @@ async function broadcastNote(userId: string, channelId: string, noteUpdate: Note
  */
 async function saveNoteUpdateDebounced(noteId: string, userId: string, contentText: string, contentHTML: string) {
 
+    logger.info(`[channels.saveNoteUpdateDebounced] About to handle update for ${noteId}`);
+
+    const notesUpdateDebounceInfo = notesContentUpdateDebounce.get(noteId) as NotesUpdateDebounceInfo;
+
     // If a debounce for the note not exists yet, create one for it.
-    if (!usersUpdateDebounce[noteId]) {
+    if (!notesUpdateDebounceInfo) {
+        logger.info(`[channels.saveNoteUpdateDebounced] Creating new debounce cache object for ${noteId}...`);
         // Create the debounce function
         const debounceFunc = debounce(() => {
             (async () => {
+                logger.info(`[channels.saveNoteUpdateDebounced] Debounce for ${noteId} triggered`);
+
                 // If the state not exists, abort update
-                if (!usersUpdateDebounce[noteId]) {
+                const notesUpdateDebounceInfo = notesContentUpdateDebounce.get(noteId);
+                if (!notesUpdateDebounceInfo) {
                     return;
                 }
                 try {
+                    logger.info(`[channels.saveNoteUpdateDebounced] About to flush DB update for ${noteId}`);
                     // Save the last state of the note in the DB
-                    await notesService.setOpenNoteContent(noteId, userId, usersUpdateDebounce[noteId].lastState.contentText, usersUpdateDebounce[noteId].lastState.contentHTML);
+                    await notesService.setOpenNoteContent(noteId, userId, notesUpdateDebounceInfo.lastState.contentText, notesUpdateDebounceInfo.lastState.contentHTML);
                 } catch (error) {
-                    logger.error(`[channels.saveUpdateDebounced] invoking setOpenNoteContent for noteId ${noteId} failed `)
+                    logger.error(`[channels.saveNoteUpdateDebounced] invoking setOpenNoteContent for noteId ${noteId} failed `)
                 }
             })();
         }, DEBOUNCE_NOTES_CHANGES_UPDATE.Milliseconds) as unknown as () => void;
-        usersUpdateDebounce[noteId] = {
+        notesContentUpdateDebounce.set(noteId, {
             debounceFunc,
             lastState: {
                 contentHTML,
                 contentText,
             }
-        };
+        });
     }
+
+    logger.info(`[channels.saveNoteUpdateDebounced] Updating debounce cache and calling debounce for ${noteId}`);
+
+    // Call to the debounceFunc
+    notesUpdateDebounceInfo.debounceFunc();
+
     // Keep the current note state
-    usersUpdateDebounce[noteId].lastState = {
+    notesUpdateDebounceInfo.lastState = {
         contentHTML,
         contentText
     }
-    // Call to the debounceFunc
-    usersUpdateDebounce[noteId].debounceFunc();
 }
 
 async function handleIncomingChannel(verifiedWebSocket: VerifiedWebSocket) {
