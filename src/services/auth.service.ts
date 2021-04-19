@@ -43,6 +43,7 @@ if (!GITLAB_SECRET) {
 const jwtExpiresIn = process.env.JWT_EXPIRES_IN || '2 days';
 
 interface OAuthUserInfo {
+  uniqueOAuthId: string;
   email: string;
   displayName: string;
   avatarUrl: string;
@@ -101,12 +102,13 @@ class AuthService {
     };
 
     const infoResponse = await fetch('https://api.github.com/user', getInfoOption);
-    const { email, name, avatar_url } = await infoResponse.json() as { email: string, name: string, avatar_url: string };
+    const { id, email, name, avatar_url } = await infoResponse.json() as { id: string; email: string, name: string, avatar_url: string };
 
     logger.info(`[AuthService.validateGitHubOAuth2Session] User "${email}" successfully get user info using code "${oauth2Session.code}"  ...`);
 
     return {
       email,
+      uniqueOAuthId: id,
       displayName: name,
       avatarUrl: avatar_url,
     }
@@ -144,12 +146,13 @@ class AuthService {
     };
 
     const infoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo?alt=json', getInfoOption);
-    const { email, name, picture } = await infoResponse.json() as { email: string, name: string, picture: string };
+    const { id, email, name, picture } = await infoResponse.json() as { id: string; email: string, name: string, picture: string };
 
     logger.info(`[AuthService.validateGoogleOAuth2Session] get user info for code "${oauth2Session.code}" user "${email}" successfully`);
 
     return {
       email,
+      uniqueOAuthId: id,
       displayName: name,
       avatarUrl: picture,
     }
@@ -187,19 +190,20 @@ class AuthService {
     };
 
     const infoResponse = await fetch('https://gitlab.com/api/v4/user', getInfoOption);
-    const { email, name, avatar_url } = await infoResponse.json() as { email: string, name: string, avatar_url: string };
+    const { id, email, name, avatar_url } = await infoResponse.json() as { id: string; email: string, name: string, avatar_url: string };
 
     logger.info(`[AuthService.validateGitLabOAuth2Session] get user info for code "${oauth2Session.code}" user "${email}" successfully`);
 
     return {
       email,
+      uniqueOAuthId: id,
       displayName: name,
       avatarUrl: avatar_url,
     }
   }
 
   public async authByOAuth(oauth2Session: OAuth2Session): Promise<string> {
-    logger.info(`[AuthService.authByGithub] About to login user using "${oauth2Session.oauth2Service}" code "${oauth2Session.code}" ...`);
+    logger.info(`[AuthService.authByOAuth] About to login user using "${oauth2Session.oauth2Service}" code "${oauth2Session.code}" ...`);
 
     try {
 
@@ -217,15 +221,18 @@ class AuthService {
           break;
       }
 
+      // Add the OAuth service as unique prefix 
+      userInfo.uniqueOAuthId = `${oauth2Session.oauth2Service}:${userInfo.uniqueOAuthId}`
+
       const avatarBase64 = await this.getAvatarBase64(userInfo.avatarUrl);
-      logger.info(`[AuthService.authByGithub] Getting user info for code "${oauth2Session.code}"  succeed`);
+      logger.info(`[AuthService.authByOAuth] Getting user info for code "${oauth2Session.code}" uniqueOAuthId "${userInfo.uniqueOAuthId}" succeed`);
 
-      logger.info(`[AuthService.authByGithub] About to set user in system for code "${oauth2Session.code}" email "${userInfo.email}"  ...`);
+      logger.info(`[AuthService.authByOAuth] About to set user in system for code "${oauth2Session.code}" uniqueOAuthId "${userInfo.uniqueOAuthId}"  ...`);
 
 
-      logger.info(`[AuthService.authByGithub] About to set user in system for code "${oauth2Session.code}" email "${userInfo.email}"  ...`);
+      logger.info(`[AuthService.authByOAuth] About to set user in system for code "${oauth2Session.code}" uniqueOAuthId "${userInfo.uniqueOAuthId}"  ...`);
 
-      const userId = await createOrSetUserData(userInfo.email, userInfo.displayName, avatarBase64);
+      const userId = await createOrSetUserData(userInfo.uniqueOAuthId, userInfo.email, userInfo.displayName, avatarBase64);
 
       const jwtToken = jwt.sign(
         {
@@ -238,11 +245,11 @@ class AuthService {
           expiresIn: jwtExpiresIn,
         },
       );
-      logger.info(`[AuthService.authByGithub] Setting user "${userId}" in system for code "${oauth2Session.code}" email "${userInfo.email}" succeed, login proses successfully done`);
+      logger.info(`[AuthService.authByOAuth] Setting user "${userId}" in system for code "${oauth2Session.code}" uniqueOAuthId "${userInfo.uniqueOAuthId}" succeed, login proses successfully done`);
       return jwtToken;
 
     } catch (error) {
-      logger.error(`[AuthService.authByGithub] Validate and get token / info for code "${oauth2Session.code}" using "${oauth2Session.oauth2Service}" failed`, error);
+      logger.error(`[AuthService.authByOAuth] Validate and get token / info for code "${oauth2Session.code}" using "${oauth2Session.oauth2Service}" failed`, error);
       console.log(error);
       throw error;
     }

@@ -11,23 +11,30 @@ export class User {
     id: string;
 
     /**
-     * The user unique email
+     * The user logon provider unique id
      * TODO: add index
      */
     @Column()
-    email: string;
+    uniqueOAuthId: string;
+
+    /**
+     * The user unique email (can be )
+     * TODO: add index
+     */
+    @Column()
+    email?: string;
 
     /**
      * The user display name
      */
     @Column()
-    displayName: string;
+    displayName?: string;
 
     /**
      * The user avatar as Base64 string
      */
-     @Column()
-     avatarBase64: string;
+    @Column()
+    avatarBase64?: string;
 
     /**
      * The open notes (user workspace) collection
@@ -35,10 +42,11 @@ export class User {
     @Column()
     openNotes: string[];
 
-    constructor(email: string, displayName: string, avatarBase64: string) {
+    constructor(uniqueOAuthId: string, email: string, displayName: string, avatarBase64: string) {
         this.email = email;
         this.displayName = displayName;
         this.avatarBase64 = avatarBase64;
+        this.uniqueOAuthId = uniqueOAuthId;
     }
 
     /**

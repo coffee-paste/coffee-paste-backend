@@ -83,37 +83,54 @@ export async function removeNoteFromUserOpenNotesData(userId: string, noteId: st
     logger.info(`[users.data.removeNoteFromUserOpenNotesData] Remove note "${noteId}" from the open note of user "${userId}" succeed`);
 }
 
-export async function createOrSetUserData(email: string, displayName: string, avatarBase64: string): Promise<string> {
-    logger.info(`[users.data.createOrSetUser] About to set  "${email}" user ...`);
+export async function createOrSetUserData(uniqueOAuthId: string, email: string, displayName: string, avatarBase64: string): Promise<string> {
+    logger.info(`[users.data.createOrSetUser] About to set "${uniqueOAuthId}" user ...`);
     const usersRepository = getMongoRepository(User);
 
     // Get the user info, if exist, by the email (even if the mail registered by other oauth provider the email is the user unique identity)
-    const existUser = await usersRepository.findOne({
+    let existsUser = await usersRepository.findOne({
         where: {
             email,
         }
     })
 
-    // If user info has been changed, update it.
-    if (existUser) {
-        if (existUser.displayName !== displayName || existUser.avatarBase64 !== avatarBase64) {
-            logger.info(`[users.data.createOrSetUser] About to set  "${existUser.id}" "${email}" exists the name "${displayName}"...`);
-            await usersRepository.update({ id: existUser.toObjectId() as any }, { displayName, avatarBase64 });
-            logger.info(`[users.data.createOrSetUser] Setting  "${existUser.id}" "${email}" name "${displayName}" succeed`);
-        }
-        logger.info(`[users.data.createOrSetUser] User  "${existUser.id}" "${email}" exists`);
-        // Update user workspace cache 
-        userOpenNotesCache[existUser.id] = existUser.openNotes;
-        return existUser.id;
+    // Verbose info about user found by email
+    if (existsUser) {
+        logger.info(`[users.data.createOrSetUser] User "${uniqueOAuthId}" already exists, found by email...`);
     }
 
-    logger.info(`[users.data.createOrSetUser] About to create a new user for "${email}" ...`);
-    const user = new User(email, displayName, avatarBase64);
+    if (!existsUser) {
+        existsUser = await usersRepository.findOne({
+            where: {
+                uniqueOAuthId,
+            }
+        });
+        // Verbose info about user found by uniqueOAuthId
+        if (existsUser) {
+            logger.info(`[users.data.createOrSetUser] User "${uniqueOAuthId}" already exists, found by uniqueOAuthId ${uniqueOAuthId} ...`);
+        }
+    }
+
+    // If user info has been changed, update it.
+    if (existsUser) {
+        if (existsUser.displayName !== displayName || existsUser.avatarBase64 !== avatarBase64) {
+            logger.info(`[users.data.createOrSetUser] About to set  "${existsUser.id}" "${uniqueOAuthId}" exists the name "${displayName}"...`);
+            await usersRepository.update({ id: existsUser.toObjectId() as any }, { displayName, avatarBase64 });
+            logger.info(`[users.data.createOrSetUser] Setting  "${existsUser.id}" "${email}" name "${displayName}" succeed`);
+        }
+        logger.info(`[users.data.createOrSetUser] User  "${existsUser.id}" "${uniqueOAuthId}" exists`);
+        // Update user workspace cache 
+        userOpenNotesCache[existsUser.id] = existsUser.openNotes;
+        return existsUser.id;
+    }
+
+    logger.info(`[users.data.createOrSetUser] About to create a new user for "${uniqueOAuthId}" ...`);
+    const user = new User(uniqueOAuthId, email, displayName, avatarBase64);
     const newUser = await usersRepository.save(user);
 
     // Set user workspace cache 
     userOpenNotesCache[newUser.id] = [];
-    logger.info(`[users.data.createOrSetUser] Create user "${newUser.id}" for "${email}" successfully`);
+    logger.info(`[users.data.createOrSetUser] Create user "${newUser.id}" for "${uniqueOAuthId}" successfully`);
     return newUser.id;
 }
 
