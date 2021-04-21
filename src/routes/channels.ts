@@ -68,7 +68,7 @@ async function saveNoteUpdateDebounced(noteId: string, userId: string, contentTe
 
     logger.info(`[channels.saveNoteUpdateDebounced] About to handle update for ${noteId}`);
 
-    const notesUpdateDebounceInfo = notesContentUpdateDebounce.get(noteId) as NotesUpdateDebounceInfo;
+    let notesUpdateDebounceInfo = notesContentUpdateDebounce.get(noteId);
 
     // If a debounce for the note not exists yet, create one for it.
     if (!notesUpdateDebounceInfo) {
@@ -92,13 +92,14 @@ async function saveNoteUpdateDebounced(noteId: string, userId: string, contentTe
                 }
             })();
         }, DEBOUNCE_NOTES_CHANGES_UPDATE.Milliseconds) as unknown as () => void;
-        notesContentUpdateDebounce.set(noteId, {
+        notesUpdateDebounceInfo = {
             debounceFunc,
             lastState: {
                 contentHTML,
                 contentText,
             }
-        });
+        } as NotesUpdateDebounceInfo;
+        notesContentUpdateDebounce.set(noteId, notesUpdateDebounceInfo);
     }
 
     logger.info(`[channels.saveNoteUpdateDebounced] Updating debounce cache and calling debounce for ${noteId}`);
