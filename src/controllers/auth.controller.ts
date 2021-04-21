@@ -24,5 +24,7 @@ export class AuthController extends Controller {
   public async authByOAuth(@Body() body : OAuth2Session) {
     const jwtToken = await authService.authByOAuth(body);
     this.setHeader('Authentication', jwtToken);
+    this.setHeader('Access-Control-Allow-Headers', 'Authorization');
+    this.setHeader('Access-Control-Expose-Headers', 'Authentication');
   }
 }
