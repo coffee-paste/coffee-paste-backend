@@ -38,7 +38,7 @@ export class AuthController extends Controller {
     const maxAgeInSec = ms(jwtExpiresIn) / 1000;
     this.setHeader(
       'Set-Cookie',
-      `jwt_token=${jwtToken}; Max-Age=${maxAgeInSec}; Path=/; HttpOnly; Secure; SameSite=Strict;`,
+      `jwt_token=${jwtToken}; Max-Age=${maxAgeInSec}; Path=/; HttpOnly; Secure; SameSite=None;`,
     );
   }
 
