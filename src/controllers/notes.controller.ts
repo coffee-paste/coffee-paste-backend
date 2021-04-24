@@ -18,6 +18,7 @@ import { NoteStatus } from "../core";
 import { Note } from "../models";
 import { notesService } from "../services";
 import express, { Response as ExResponse, Request as ExRequest } from "express";
+import { generateChannelKey } from "../security";
 
 @Tags('Notes')
 @Route("notes")
@@ -25,7 +26,7 @@ export class NotesController extends Controller {
 
   @Security('jwt', ['user'])
   @Post("/")
-  public async createNotes(@Request() request: ExRequest): Promise<string> {
+  public async createNote(@Request() request: ExRequest): Promise<string> {
     return await notesService.createNote(request.user.userId);
   }
 
@@ -57,6 +58,17 @@ export class NotesController extends Controller {
   @Get("/workspace")
   public async getOpenNotes(@Request() request: ExRequest): Promise<Note[]> {
     return await notesService.getWorkspaceNotes(request.user.userId);
+  }
+
+  /**
+   * Generating channel key in order to allow open web-socket channel.
+   * The key should append to the WS URL as channelKey param, the channel key is valid for 1 minute only.
+   * @returns Channel generate one-time key
+   */
+  @Security('jwt', ['user'])
+  @Get("/notes/channel-key")
+  public async getChannelKey(@Request() request: ExRequest): Promise<string> {
+    return generateChannelKey(request.user);
   }
 
   @Security('jwt', ['user'])

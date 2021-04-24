@@ -40,7 +40,7 @@ if (!GITLAB_SECRET) {
   process.exit();
 }
 
-const jwtExpiresIn = process.env.JWT_EXPIRES_IN || '2 days';
+export const jwtExpiresIn = process.env.JWT_EXPIRES_IN || '2 days';
 
 interface OAuthUserInfo {
   uniqueOAuthId: string;

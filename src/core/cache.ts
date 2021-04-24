@@ -1,5 +1,6 @@
 import NodeCache from 'node-cache';
 import { Duration } from 'unitsnet-js';
+import { VerifiedUser } from './symbols';
 
 class Cache<T> {
     private _nodeCache: NodeCache;
@@ -18,6 +19,10 @@ class Cache<T> {
     public get(key: string): T | undefined {
         return this._nodeCache.get(key);
     }
+
+    public delete(key: string) {
+        return this._nodeCache.del(key);
+    }
 }
 
 export interface NotesUpdateDebounceInfo {
@@ -35,6 +40,12 @@ export const notesContentUpdateDebounce = new Cache<NotesUpdateDebounceInfo>(
     Duration.FromHours(1),
     Duration.FromHours(1),
     false // in order to use debounceFunc for each note, don't clone the JS object 
+);
+
+export const channelKeys = new Cache<VerifiedUser>(
+    Duration.FromMinutes(1),
+    Duration.FromMinutes(0.5),
+    false // don't clone the JS object 
 );
 
 
