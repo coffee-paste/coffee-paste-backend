@@ -6,7 +6,7 @@ import * as uuid from 'uuid';
 import { Duration } from 'unitsnet-js';
 import debounce from 'lodash.debounce';
 import { IncomingNoteUpdate, logger, notesContentUpdateDebounce, NotesUpdateDebounceInfo, NoteUpdate, VerifiedWebSocket } from '../core';
-import { incomingNoteUpdateSchema, schemaValidator, verifyJwtToken } from '../security';
+import { incomingNoteUpdateSchema, schemaValidator, verifyChannelKey } from '../security';
 
 /** Time to await for DB update till last note update  */
 const DEBOUNCE_NOTES_CHANGES_UPDATE = Duration.FromSeconds(20);
@@ -162,9 +162,9 @@ export function handleChannels(wss: WebSocket.Server) {
 
         try {
             // Extract the JWT token from the path query
-            const jwt = req.url.split('=')[1] || '';
+            const channelKey = req.url.split('=')[1] || '';
             // Verify the JWT
-            const verifiedUser = await verifyJwtToken(jwt);
+            const verifiedUser = verifyChannelKey(channelKey);
             const verifiedWebSocket = (ws as VerifiedWebSocket);
             // Set unique ID and the user info session as WS properties
             verifiedWebSocket.id = uuid.v4();
