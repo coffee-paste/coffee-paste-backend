@@ -7,11 +7,34 @@ import rateLimit from 'express-rate-limit';
 import { sanitizeExpressMiddleware } from 'generic-json-sanitizer';
 import helmet from 'helmet';
 import { logger } from "./core";
+import cookieParser from 'cookie-parser';
 
 export const app = express();
 
-// Open cors access
-app.use(cors())
+// Open CORS to let frontend apps API access.
+const { ALLOW_DASHBOARD_ORIGINS } = process.env;
+
+// Get the domains (separated by ',') or use the default domains
+const whitelist = ALLOW_DASHBOARD_ORIGINS
+  ? ALLOW_DASHBOARD_ORIGINS.split(',')
+  : ['http://127.0.0.1:8080', 'http://localhost:8080'];
+
+logger.info('Opening CORS for the following origins:');
+// tslint:disable-next-line: no-console
+console.table(whitelist);
+app.use(
+  cors({
+    credentials: true,
+    origin: (origin, callback) => {
+      /** If origin not sent (mean it`s same origin) or origin match white list, allow it. */
+      if (!origin || whitelist.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error(`${origin} not allowed by CORS`));
+      }
+    },
+  }),
+);
 
 // Protect from XSS and other malicious attacks
 app.use(helmet());
@@ -31,6 +54,7 @@ app.use(
   })
 );
 app.use(bodyParser.json({ limit: '2mb' })); // for parsing application/json
+app.use(cookieParser()); // Parse every request cookie to readable json.
 
 // Sanitize Json schema arrived from client.
 // to avoid stored XSS issues.
