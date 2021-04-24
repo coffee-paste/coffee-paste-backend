@@ -55,7 +55,6 @@ export async function expressAuthentication(request: ExRequest, securityName: st
         request.cookies.jwt_token = request.headers["authentication"] as string;
     }
 
-    logger.debug(`${logPrefix} Session authentication request arrived with "${JSON.stringify(request.cookies)}"`);
     const token = request.cookies.jwt_token as string;
 
     if (!token || typeof token !== 'string') {
