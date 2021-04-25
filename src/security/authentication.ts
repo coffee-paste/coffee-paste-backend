@@ -3,6 +3,9 @@ import * as jwt from 'jsonwebtoken';
 import { channelKeys, logger, VerifiedUser } from "../core";
 import * as uuid from 'uuid';
 
+export const AUTHENTICATION_HEADER = "authentication";
+export const JWT_COOKIE_NAME = "jwt_token";
+
 export const JWT_SECRET = process.env.JWT_SECRET || '';
 if (!JWT_SECRET) {
     logger.fatal('You must set the JWT_SECRET!');
@@ -51,11 +54,14 @@ export async function expressAuthentication(request: ExRequest, securityName: st
         new Error(`unknown security name ${securityName}`);
     }
 
-    if (process.env.NODE_ENV === 'development') {
-        request.cookies.jwt_token = request.headers["authentication"] as string;
+    // The authentication header sent, use it as the token.
+    // Note, that as default in production the token saved only in a secure cookie to avoid XSS.
+    // But we still support using API with authentication header
+    if (request.headers[AUTHENTICATION_HEADER]) {
+        request.cookies[JWT_COOKIE_NAME] = request.headers[AUTHENTICATION_HEADER] as string;
     }
 
-    const token = request.cookies.jwt_token as string;
+    const token = request.cookies[JWT_COOKIE_NAME] as string;
 
     if (!token || typeof token !== 'string') {
         logger.error(`${logPrefix} No token provided`);

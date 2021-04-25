@@ -26,8 +26,8 @@ export class NotesController extends Controller {
 
   @Security('jwt', ['user'])
   @Post("/")
-  public async createNote(@Request() request: ExRequest): Promise<string> {
-    return await notesService.createNote(request.user.userId);
+  public async createNote(@Request() request: ExRequest, @Body() body: { name?: string }): Promise<string> {
+    return await notesService.createNote(request.user.userId, body.name);
   }
 
   @Security('jwt', ['user'])
@@ -66,7 +66,7 @@ export class NotesController extends Controller {
    * @returns Channel generate one-time key
    */
   @Security('jwt', ['user'])
-  @Get("/notes/channel-key")
+  @Get("/channel-key")
   public async getChannelKey(@Request() request: ExRequest): Promise<string> {
     return generateChannelKey(request.user);
   }

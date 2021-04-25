@@ -15,6 +15,7 @@ import { logger, OAuth2Session } from "../core";
 import { authService, jwtExpiresIn } from "../services";
 import express, { Response as ExResponse, Request as ExRequest } from "express";
 import ms from "ms";
+import { AUTHENTICATION_HEADER, JWT_COOKIE_NAME } from "../security";
 
 @Tags('Authentication')
 @Route("auth")
@@ -29,7 +30,7 @@ export class AuthController extends Controller {
     const jwtToken = await authService.authByOAuth(body);
 
     if (process.env.NODE_ENV === 'development') {
-      this.setHeader('Authentication', jwtToken);
+      this.setHeader(AUTHENTICATION_HEADER, jwtToken);
       this.setHeader('Access-Control-Allow-Headers', 'Authorization');
       this.setHeader('Access-Control-Expose-Headers', 'Authentication');
       return;
@@ -38,7 +39,7 @@ export class AuthController extends Controller {
     const maxAgeInSec = ms(jwtExpiresIn) / 1000;
     this.setHeader(
       'Set-Cookie',
-      `jwt_token=${jwtToken}; Max-Age=${maxAgeInSec}; Path=/; HttpOnly; Secure; SameSite=None;`,
+      `${JWT_COOKIE_NAME}=${jwtToken}; Max-Age=${maxAgeInSec}; Path=/; HttpOnly; Secure; SameSite=None;`,
     );
   }
 
@@ -50,6 +51,6 @@ export class AuthController extends Controller {
     /** Currently there is no blacklist of invalid tokens */
 
     /** Send clean session by response to client browser. */
-    this.setHeader('Set-Cookie', `jwt_token=0; Max-Age=120; Path=/; HttpOnly; Secure; SameSite=None;`);
+    this.setHeader('Set-Cookie', `${JWT_COOKIE_NAME}=0; Max-Age=120; Path=/; HttpOnly; Secure; SameSite=None;`);
   }
 }
