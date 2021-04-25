@@ -17,7 +17,7 @@ export async function getOpenNotesData(userId: string): Promise<Note[]> {
             }
         },
         order: {
-            lastModifiedTime: 'DESC'
+            creationTime: 'ASC'
         }
     });
     logger.info(`[notes.data.getOpenNotesData] Fetch workspace notes (${notes.length}) for user "${userId}" succeed`);
@@ -44,9 +44,9 @@ export async function getBacklogNotesData(userId: string): Promise<Note[]> {
     return notes;
 }
 
-export async function createNoteData(userId: string): Promise<string> {
+export async function createNoteData(userId: string, name?: string): Promise<string> {
     logger.info(`[notes.data.createNoteData] About to create a new note for user "${userId}"...`);
-    const note = new Note(userId);
+    const note = new Note(userId, name);
     const notesRepository = getMongoRepository(Note);
     const createdNote = await notesRepository.save(note);
     try {
@@ -89,7 +89,7 @@ export async function setOpenNoteContentData(noteId: string, userId: string, con
     await notesRepository.update({ id: new mongodb.ObjectID(noteId) as any }, {
         contentHTML,
         contentText,
-        lastModifiedTime : new Date().getTime(),
+        lastModifiedTime: new Date().getTime(),
     });
     logger.info(`[notes.data.setOpenNoteContentData] Update the note "${noteId}" content succeed`);
 }
@@ -98,13 +98,13 @@ export async function setNoteContentData(noteId: string, userId: string, content
     logger.info(`[notes.data.setNoteContentData] About to update the note "${noteId}" content ...`);
 
     const notesRepository = getMongoRepository(Note);
-    await notesRepository.update({ 
+    await notesRepository.update({
         id: new mongodb.ObjectID(noteId) as any,
-        userId :  new mongodb.ObjectID(userId) as any
-     }, {
+        userId: new mongodb.ObjectID(userId) as any
+    }, {
         contentHTML,
         contentText,
-        lastModifiedTime : new Date().getTime(),
+        lastModifiedTime: new Date().getTime(),
     });
     logger.info(`[notes.data.setNoteContentData] update the note "${noteId}" content succeed`);
 }
@@ -113,10 +113,10 @@ export async function setNoteNameData(noteId: string, userId: string, name: stri
     logger.info(`[notes.data.setNoteNameData] About to update the note "${noteId}" name ...`);
 
     const notesRepository = getMongoRepository(Note);
-    await notesRepository.update({ 
+    await notesRepository.update({
         id: new mongodb.ObjectID(noteId) as any,
-        userId :  new mongodb.ObjectID(userId) as any
-     }, {
+        userId: new mongodb.ObjectID(userId) as any
+    }, {
         name
     });
     logger.info(`[notes.data.setNoteNameData] Update the note "${noteId}" name succeed`);
