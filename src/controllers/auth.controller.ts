@@ -50,6 +50,6 @@ export class AuthController extends Controller {
     /** Currently there is no blacklist of invalid tokens */
 
     /** Send clean session by response to client browser. */
-    this.setHeader('Set-Cookie', `jwt_token=0;  Path=/;`);
+    this.setHeader('Set-Cookie', `jwt_token=0; Max-Age=120; Path=/; HttpOnly; Secure; SameSite=None;`);
   }
 }
