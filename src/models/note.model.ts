@@ -47,8 +47,9 @@ export class Note {
     @Column()
     contentHTML: string;
 
-    constructor(userId: string) {
+    constructor(userId: string, name?: string) {
         this.userId = userId;
+        this.name = name;
         const now = new Date().getTime();
         this.creationTime = now;
         this.lastModifiedTime = now;

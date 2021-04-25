@@ -24,9 +24,9 @@ class NotesService {
     return notes;
   }
 
-  public async createNote(userId: string): Promise<string> {
+  public async createNote(userId: string, name?: string): Promise<string> {
     logger.info(`[NotesService.createNote] About to create a new note for user "${userId}"...`);
-    const noteId = await createNoteData(userId);
+    const noteId = await createNoteData(userId, name);
     logger.info(`[NotesService.createNote] Create a new note for user "${userId}" succeed`);
     return noteId;
   }
