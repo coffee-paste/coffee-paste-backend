@@ -250,8 +250,9 @@ class AuthService {
 
     } catch (error) {
       logger.error(`[AuthService.authByOAuth] Validate and get token / info for code "${oauth2Session.code}" using "${oauth2Session.oauth2Service}" failed`, error);
-      console.log(error);
-      throw error;
+      throw {
+        status: 401,
+      };
     }
   }
 }
