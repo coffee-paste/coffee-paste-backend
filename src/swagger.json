@@ -1,0 +1,565 @@
+{
+	"components": {
+		"examples": {},
+		"headers": {},
+		"parameters": {},
+		"requestBodies": {},
+		"responses": {},
+		"schemas": {
+			"OAuth2Service": {
+				"enum": [
+					"GITHUB",
+					"GOOGLE",
+					"GITLAB"
+				],
+				"type": "string"
+			},
+			"OAuth2Session": {
+				"description": "The OAuth2 session",
+				"properties": {
+					"code": {
+						"type": "string",
+						"description": "The session logon code, see https://docs.github.com/en/developers/apps/authorizing-oauth-apps & https://developers.google.com/identity/protocols/oauth2/web-server"
+					},
+					"redirectUri": {
+						"type": "string"
+					},
+					"oauth2Service": {
+						"$ref": "#/components/schemas/OAuth2Service"
+					}
+				},
+				"required": [
+					"code",
+					"redirectUri",
+					"oauth2Service"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"NoteStatus": {
+				"description": "Note status",
+				"enum": [
+					"WORKSPACE",
+					"BACKLOG"
+				],
+				"type": "string"
+			},
+			"Note": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "Note unique id"
+					},
+					"userId": {
+						"type": "string",
+						"description": "The note owner"
+					},
+					"name": {
+						"type": "string",
+						"description": "The note name (optional)"
+					},
+					"creationTime": {
+						"type": "number",
+						"format": "double",
+						"description": "The note creation UTC time"
+					},
+					"lastModifiedTime": {
+						"type": "number",
+						"format": "double",
+						"description": "The note last update UTC time"
+					},
+					"contentText": {
+						"type": "string",
+						"description": "The note content as plain-text"
+					},
+					"contentHTML": {
+						"type": "string",
+						"description": "The note content as HTML"
+					}
+				},
+				"required": [
+					"id",
+					"userId",
+					"creationTime",
+					"lastModifiedTime",
+					"contentText",
+					"contentHTML"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"User": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "User unique id"
+					},
+					"uniqueOAuthId": {
+						"type": "string",
+						"description": "The user logon provider unique id\r\nTODO: add index"
+					},
+					"email": {
+						"type": "string",
+						"description": "The user unique email (can be )\r\nTODO: add index"
+					},
+					"displayName": {
+						"type": "string",
+						"description": "The user display name"
+					},
+					"avatarBase64": {
+						"type": "string",
+						"description": "The user avatar as Base64 string"
+					},
+					"openNotes": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array",
+						"description": "The open notes (user workspace) collection"
+					}
+				},
+				"required": [
+					"id",
+					"uniqueOAuthId",
+					"openNotes"
+				],
+				"type": "object",
+				"additionalProperties": false
+			}
+		},
+		"securitySchemes": {
+			"jwt": {
+				"type": "apiKey",
+				"name": "authentication",
+				"in": "header"
+			}
+		}
+	},
+	"info": {
+		"title": "coffee-paste-backend",
+		"version": "1.0.0",
+		"license": {
+			"name": "ISC"
+		},
+		"contact": {
+			"name": "Haim Kastner"
+		}
+	},
+	"openapi": "3.0.0",
+	"paths": {
+		"/auth/oauth2": {
+			"post": {
+				"operationId": "AuthByOAuth",
+				"responses": {
+					"204": {
+						"description": "No content"
+					}
+				},
+				"description": "Login to service *after* getting the authorization service OAuth2 code.",
+				"tags": [
+					"Authentication"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"description": "The OAuth logon session",
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/OAuth2Session"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/auth/logout": {
+			"post": {
+				"operationId": "Logout",
+				"responses": {
+					"204": {
+						"description": "No content"
+					}
+				},
+				"tags": [
+					"Authentication"
+				],
+				"security": [
+					{
+						"jwt": [
+							"user"
+						]
+					}
+				],
+				"parameters": []
+			}
+		},
+		"/notes": {
+			"post": {
+				"operationId": "CreateNote",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Notes"
+				],
+				"security": [
+					{
+						"jwt": [
+							"user"
+						]
+					}
+				],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"name": {
+										"type": "string"
+									}
+								},
+								"type": "object"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/notes/status/{noteId}": {
+			"put": {
+				"operationId": "SetNotes",
+				"responses": {
+					"204": {
+						"description": "No content"
+					}
+				},
+				"tags": [
+					"Notes"
+				],
+				"security": [
+					{
+						"jwt": [
+							"user"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "noteId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"status": {
+										"$ref": "#/components/schemas/NoteStatus"
+									}
+								},
+								"required": [
+									"status"
+								],
+								"type": "object"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/notes/content/{noteId}": {
+			"put": {
+				"operationId": "SetNotesContent",
+				"responses": {
+					"204": {
+						"description": "No content"
+					}
+				},
+				"tags": [
+					"Notes"
+				],
+				"security": [
+					{
+						"jwt": [
+							"user"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "noteId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"contentHTML": {
+										"type": "string"
+									},
+									"contentText": {
+										"type": "string"
+									}
+								},
+								"required": [
+									"contentHTML",
+									"contentText"
+								],
+								"type": "object"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/notes/name/{noteId}": {
+			"put": {
+				"operationId": "SetNotesName",
+				"responses": {
+					"204": {
+						"description": "No content"
+					}
+				},
+				"tags": [
+					"Notes"
+				],
+				"security": [
+					{
+						"jwt": [
+							"user"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "noteId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"name": {
+										"type": "string"
+									}
+								},
+								"required": [
+									"name"
+								],
+								"type": "object"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/notes/{noteId}": {
+			"delete": {
+				"operationId": "DeleteNotes",
+				"responses": {
+					"204": {
+						"description": "No content"
+					}
+				},
+				"tags": [
+					"Notes"
+				],
+				"security": [
+					{
+						"jwt": [
+							"user"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "noteId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/notes/workspace": {
+			"get": {
+				"operationId": "GetOpenNotes",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/Note"
+									},
+									"type": "array"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Notes"
+				],
+				"security": [
+					{
+						"jwt": [
+							"user"
+						]
+					}
+				],
+				"parameters": []
+			}
+		},
+		"/notes/channel-key": {
+			"get": {
+				"operationId": "GetChannelKey",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				},
+				"description": "Generating channel key in order to allow open web-socket channel.\r\nThe key should append to the WS URL as channelKey param, the channel key is valid for 1 minute only.",
+				"tags": [
+					"Notes"
+				],
+				"security": [
+					{
+						"jwt": [
+							"user"
+						]
+					}
+				],
+				"parameters": []
+			}
+		},
+		"/notes/backlog": {
+			"get": {
+				"operationId": "GetBacklogNotes",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/Note"
+									},
+									"type": "array"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Notes"
+				],
+				"security": [
+					{
+						"jwt": [
+							"user"
+						]
+					}
+				],
+				"parameters": []
+			}
+		},
+		"/users/profile": {
+			"get": {
+				"operationId": "GetUserProfile",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/User"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Users"
+				],
+				"security": [
+					{
+						"jwt": [
+							"user"
+						]
+					}
+				],
+				"parameters": []
+			}
+		},
+		"/users": {
+			"delete": {
+				"operationId": "DeleteUser",
+				"responses": {
+					"204": {
+						"description": "No content"
+					}
+				},
+				"tags": [
+					"Users"
+				],
+				"security": [
+					{
+						"jwt": [
+							"user"
+						]
+					}
+				],
+				"parameters": []
+			}
+		}
+	},
+	"servers": [
+		{
+			"url": "/"
+		}
+	]
+}
