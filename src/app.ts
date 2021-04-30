@@ -128,7 +128,11 @@ app.use('*', (req, res) => {
 /**
  * Production error handler, no stacktrace leaked to user.
  */
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  if (err?.status === 401) {
+    res.status(401).send();
+    return;
+  }
   try {
     logger.error(
       `express route crash,  req: ${req.method} ${req.path} error: ${err.message} user: ${req.user?.userId || 'unknown'} body: ${JSON.stringify(

@@ -1,6 +1,6 @@
 # Generated routers
 src/routes/routes.ts
-src/swagger.json
+# src/swagger.json
 
 # Logs
 logs
