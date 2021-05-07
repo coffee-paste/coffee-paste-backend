@@ -14,7 +14,7 @@ import {
   Request,
   Tags,
 } from "tsoa";
-import { NoteStatus } from "../core";
+import { NotesPage, NoteStatus, PageRequest } from "../core";
 import { Note } from "../models";
 import { notesService } from "../services";
 import express, { Response as ExResponse, Request as ExRequest } from "express";
@@ -75,5 +75,12 @@ export class NotesController extends Controller {
   @Get("/backlog")
   public async getBacklogNotes(@Request() request: ExRequest): Promise<Note[]> {
     return await notesService.getBacklogNotes(request.user.userId);
+  }
+
+  // It's post request only because of TSOA limitation for body in get requests
+  @Security('jwt', ['user'])
+  @Post("/backlog/page")
+  public async getBacklogNotesPage(@Request() request: ExRequest, @Body() page: PageRequest): Promise<NotesPage> {
+    return await notesService.getBacklogNotesPage(request.user.userId, page);
   }
 }

@@ -1,4 +1,5 @@
 import WebSocket from 'ws';
+import { Note } from '../models';
 
 /**
  * Note status
@@ -23,7 +24,7 @@ export interface OAuth2Session {
     /** The session logon code, see https://docs.github.com/en/developers/apps/authorizing-oauth-apps & https://developers.google.com/identity/protocols/oauth2/web-server */
     code: string;
     redirectUri: string;
-    oauth2Service: OAuth2Service; 
+    oauth2Service: OAuth2Service;
 }
 
 /**
@@ -61,4 +62,18 @@ declare global {
 export class VerifiedWebSocket extends WebSocket {
     user: VerifiedUser;
     id: string;
+}
+
+export interface PageRequest {
+    /** Order by note properties */
+    orderBy: { [key: string]: "ASC" | "DESC" },
+    fromIndex: number;
+    pageSize: number;
+}
+
+export interface NotesPage {
+    /** Page notes */
+    notes: Note[];
+    /** Total *available* notes */
+    totalCount: number;
 }

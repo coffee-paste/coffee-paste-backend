@@ -1,5 +1,5 @@
 import { getMongoRepository } from "typeorm";
-import { logger } from "../core";
+import { logger, NotesPage, PageRequest } from "../core";
 import { Note, User } from "../models";
 import { getUserData, removeNoteFromUserOpenNotesData, addNoteToUserOpenNotesData, getOpenNotesLazyData } from "./users.data";
 import * as mongodb from "mongodb";
@@ -37,11 +37,37 @@ export async function getBacklogNotesData(userId: string): Promise<Note[]> {
             }
         },
         order: {
-            lastModifiedTime: 'DESC'
+            lastModifiedTime: 'DESC',
+
         }
     });
-    logger.info(`[notes.data.getBacklogNotesData] Fetch backlog notes (${notes.length}) for user "${userId}" succeed`);
+    logger.info(`[notes.data.getBacklogNotesData] Fetch backlog notes (${notes?.length}) for user "${userId}" succeed`);
     return notes;
+}
+
+export async function getBacklogNotesPageData(userId: string, page: PageRequest): Promise<NotesPage> {
+    logger.info(`[notes.data.getBacklogNotesPageData] About to fetch all backlog page "${JSON.stringify(page)}" notes for user "${userId}" ...`);
+    // In order to fetch only notes that *not* in the user open notes, fetch the user info first
+    const user = await getUserData(userId);
+    const notesRepository = getMongoRepository(Note);
+    const [notes, totalCount] = await notesRepository.findAndCount({
+        where: {
+            userId: user.toObjectId(),
+            _id: {
+                $nin: user.toOpenNoteObjectIDs()
+            }
+        },
+        // Do not query content, only info about note
+        select : [ 'id', 'name', 'creationTime', 'lastModifiedTime' ],
+        order: { ...page.orderBy },
+        skip: page.fromIndex,
+        take: page.pageSize,
+    });
+    logger.info(`[notes.data.getBacklogNotesPageData] Fetch backlog notes (${notes?.length}) for user "${userId}" succeed`);
+    return {
+        notes,
+        totalCount,
+    };
 }
 
 export async function createNoteData(userId: string, name?: string): Promise<string> {
