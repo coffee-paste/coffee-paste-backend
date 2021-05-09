@@ -64,11 +64,42 @@ export class VerifiedWebSocket extends WebSocket {
     id: string;
 }
 
+export type MatchOperators = 'startWith' | 'contains' | 'notContains' | 'endWith' | 'equals' | 'notEquals';
+
+export type RelationOperators = 'equals' | 'notEquals' | 'less' | 'lessOrEquals' | 'greater' | 'greaterOrEquals';
+
+export type CollectionOperators = 'inCollection' | 'notInCollection';
+
+export interface FilterOptions {
+    match?: {
+        value: string;
+        matchOperator: MatchOperators;
+    },
+    range?: {
+        from: number;
+        to: number;
+    },
+    relation?: {
+        value: number;
+        relationOperator: RelationOperators;
+    },
+    collection?: {
+        values: (string | number)[];
+        collectionOperator: CollectionOperators;
+    }
+}
+
+export type QueryableFields = 'name' | 'creationTime' | 'lastModifiedTime' | 'contentText';
+
 export interface PageRequest {
-    /** Order by note properties */
-    orderBy: { [key: string]: "ASC" | "DESC" },
+    /** Order by note fields */
+    orderBy: { [field in QueryableFields]?: "ASC" | "DESC" },
     fromIndex: number;
     pageSize: number;
+    filter?: {
+        /** Filter by any note fields */
+        [field in QueryableFields]?: FilterOptions;
+    }
 }
 
 export interface NotesPage {

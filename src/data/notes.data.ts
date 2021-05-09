@@ -1,8 +1,22 @@
-import { getMongoRepository } from "typeorm";
-import { logger, NotesPage, PageRequest } from "../core";
+import { FindConditions, getMongoRepository, ObjectLiteral } from "typeorm";
+import { FilterOptions, logger, NotesPage, PageRequest, QueryableFields } from "../core";
 import { Note, User } from "../models";
 import { getUserData, removeNoteFromUserOpenNotesData, addNoteToUserOpenNotesData, getOpenNotesLazyData } from "./users.data";
 import * as mongodb from "mongodb";
+import { collectionOperatorsToMongoOperator, matchOperatorToMongoExpression, relationOperatorToMongoOperator } from "./utilities.data";
+
+export async function getNoteData(noteId: string, userId: string): Promise<Note> {
+    logger.info(`[notes.data.getNoteData] About to fetch note id "${noteId}"...`);
+    const notesRepository = getMongoRepository(Note);
+    const notes = await notesRepository.findOneOrFail({
+        where: {
+            _id: new mongodb.ObjectID(noteId) as any,
+            userId: new mongodb.ObjectID(userId) as any
+        }
+    });
+    logger.info(`[notes.data.getNoteData] Fetch note id "${noteId}" succeed`);
+    return notes;
+}
 
 export async function getOpenNotesData(userId: string): Promise<Note[]> {
     logger.info(`[notes.data.getOpenNotesData] About to fetch all workspace notes for user "${userId}"...`);
@@ -50,15 +64,58 @@ export async function getBacklogNotesPageData(userId: string, page: PageRequest)
     // In order to fetch only notes that *not* in the user open notes, fetch the user info first
     const user = await getUserData(userId);
     const notesRepository = getMongoRepository(Note);
-    const [notes, totalCount] = await notesRepository.findAndCount({
-        where: {
-            userId: user.toObjectId(),
-            _id: {
-                $nin: user.toOpenNoteObjectIDs()
-            }
+
+    // Do not query content if not necessary
+    const select: (keyof Note)[] = ['id', 'name', 'creationTime', 'lastModifiedTime'];
+    if (page.filter?.contentText) {
+        select.push('contentText');
+    }
+
+    // Create the initial filter, with the notes to show to the current available in the user archive/backlog
+    const where: ObjectLiteral | FindConditions<Note> = {
+        userId: user.toObjectId(),
+        _id: {
+            $nin: user.toOpenNoteObjectIDs()
         },
-        // Do not query content, only info about note
-        select : [ 'id', 'name', 'creationTime', 'lastModifiedTime' ],
+    }
+
+    // Iterate on the notes properties (if exists) with their filter
+    for (let [property, filter] of Object.entries(page.filter || {}) as [QueryableFields, FilterOptions][]) {
+
+        if (filter.match) {
+            // Create the property match filter
+            where[property] = matchOperatorToMongoExpression(filter.match.matchOperator, filter.match.value);
+        }
+
+        if (filter.relation) {
+            where[property] = where[property] || {};
+            const operatorKey = relationOperatorToMongoOperator(filter.relation.relationOperator);
+            // Append the property relation filter
+            where[property][operatorKey] = filter.relation.value;
+        }
+
+        if (filter.collection) {
+            where[property] = where[property] || {};
+            const operatorKey = collectionOperatorsToMongoOperator(filter.collection.collectionOperator);
+            // Append the property collection filter
+            where[property][operatorKey] = filter.collection.values;
+        }
+
+        if (filter.range) {
+            const operatorLess = relationOperatorToMongoOperator('lessOrEquals');
+            const operatorGreater = relationOperatorToMongoOperator('greaterOrEquals');
+            // Append the property range filter
+            where[property] = where[property] || {};
+            where[property][operatorGreater] = filter.range.from;
+            where[property][operatorLess] = filter.range.to;
+        }
+    }
+
+
+
+    const [notes, totalCount] = await notesRepository.findAndCount({
+        select,
+        where,
         order: { ...page.orderBy },
         skip: page.fromIndex,
         take: page.pageSize,

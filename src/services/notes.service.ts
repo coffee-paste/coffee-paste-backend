@@ -1,8 +1,15 @@
 import { Note, User } from "../models";
-import { createNoteData, getBacklogNotesData, getOpenNotesData, removeNoteFromUserOpenNotesData, addNoteToUserOpenNotesData, deleteNoteData, setNoteContentData, setOpenNoteContentData, setNoteNameData, getBacklogNotesPageData } from "../data";
+import { createNoteData, getBacklogNotesData, getOpenNotesData, removeNoteFromUserOpenNotesData, addNoteToUserOpenNotesData, deleteNoteData, setNoteContentData, setOpenNoteContentData, setNoteNameData, getBacklogNotesPageData, getNoteData } from "../data";
 import { logger, notesContentUpdateDebounce, NotesPage, NoteStatus, PageRequest } from "../core";
 
 class NotesService {
+
+  public async getNote(noteId: string, userId: string): Promise<Note> {
+    logger.info(`[NotesService.getNote] About to fetch note "${noteId}" backlog notes ...`);
+    const note = await getNoteData(noteId, userId);
+    logger.info(`[NotesService.getNote]Fetch note "${noteId}" succeed`);
+    return note;
+  }
 
   public async getWorkspaceNotes(userId: string): Promise<Note[]> {
     logger.info(`[NotesService.getOpenNotes] About to get all user "${userId}" workspace notes ...`);
