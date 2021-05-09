@@ -83,4 +83,10 @@ export class NotesController extends Controller {
   public async getBacklogNotesPage(@Request() request: ExRequest, @Body() page: PageRequest): Promise<NotesPage> {
     return await notesService.getBacklogNotesPage(request.user.userId, page);
   }
+
+  @Security('jwt', ['user'])
+  @Get("/{noteId}")
+  public async getNote(@Request() request: ExRequest, @Path() noteId: string) : Promise<Note> {
+    return await notesService.getNote(noteId, request.user.userId);
+  }
 }

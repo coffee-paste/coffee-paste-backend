@@ -110,16 +110,147 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"MatchOperators": {
+				"type": "string",
+				"enum": [
+					"startWith",
+					"contains",
+					"notContains",
+					"endWith",
+					"equals",
+					"notEquals"
+				]
+			},
+			"RelationOperators": {
+				"type": "string",
+				"enum": [
+					"equals",
+					"notEquals",
+					"less",
+					"lessOrEquals",
+					"greater",
+					"greaterOrEquals"
+				]
+			},
+			"CollectionOperators": {
+				"type": "string",
+				"enum": [
+					"inCollection",
+					"notInCollection"
+				]
+			},
+			"FilterOptions": {
+				"properties": {
+					"match": {
+						"properties": {
+							"matchOperator": {
+								"$ref": "#/components/schemas/MatchOperators"
+							},
+							"value": {
+								"type": "string"
+							}
+						},
+						"required": [
+							"matchOperator",
+							"value"
+						],
+						"type": "object"
+					},
+					"range": {
+						"properties": {
+							"to": {
+								"type": "number",
+								"format": "double"
+							},
+							"from": {
+								"type": "number",
+								"format": "double"
+							}
+						},
+						"required": [
+							"to",
+							"from"
+						],
+						"type": "object"
+					},
+					"relation": {
+						"properties": {
+							"relationOperator": {
+								"$ref": "#/components/schemas/RelationOperators"
+							},
+							"value": {
+								"type": "number",
+								"format": "double"
+							}
+						},
+						"required": [
+							"relationOperator",
+							"value"
+						],
+						"type": "object"
+					},
+					"collection": {
+						"properties": {
+							"collectionOperator": {
+								"$ref": "#/components/schemas/CollectionOperators"
+							},
+							"values": {
+								"items": {
+									"anyOf": [
+										{
+											"type": "string"
+										},
+										{
+											"type": "number",
+											"format": "double"
+										}
+									]
+								},
+								"type": "array"
+							}
+						},
+						"required": [
+							"collectionOperator",
+							"values"
+						],
+						"type": "object"
+					}
+				},
+				"type": "object",
+				"additionalProperties": false
+			},
 			"PageRequest": {
 				"properties": {
 					"orderBy": {
-						"properties": {},
-						"additionalProperties": {
-							"type": "string",
-							"enum": [
-								"ASC",
-								"DESC"
-							]
+						"properties": {
+							"name": {
+								"type": "string",
+								"enum": [
+									"ASC",
+									"DESC"
+								]
+							},
+							"creationTime": {
+								"type": "string",
+								"enum": [
+									"ASC",
+									"DESC"
+								]
+							},
+							"lastModifiedTime": {
+								"type": "string",
+								"enum": [
+									"ASC",
+									"DESC"
+								]
+							},
+							"contentText": {
+								"type": "string",
+								"enum": [
+									"ASC",
+									"DESC"
+								]
+							}
 						},
 						"type": "object",
 						"description": "Order by note properties"
@@ -131,6 +262,23 @@
 					"pageSize": {
 						"type": "number",
 						"format": "double"
+					},
+					"filter": {
+						"properties": {
+							"name": {
+								"$ref": "#/components/schemas/FilterOptions"
+							},
+							"creationTime": {
+								"$ref": "#/components/schemas/FilterOptions"
+							},
+							"lastModifiedTime": {
+								"$ref": "#/components/schemas/FilterOptions"
+							},
+							"contentText": {
+								"$ref": "#/components/schemas/FilterOptions"
+							}
+						},
+						"type": "object"
 					}
 				},
 				"required": [
@@ -445,6 +593,41 @@
 				"responses": {
 					"204": {
 						"description": "No content"
+					}
+				},
+				"tags": [
+					"Notes"
+				],
+				"security": [
+					{
+						"jwt": [
+							"user"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "noteId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			},
+			"get": {
+				"operationId": "GetNote",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Note"
+								}
+							}
+						}
 					}
 				},
 				"tags": [
