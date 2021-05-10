@@ -80,34 +80,34 @@ export async function getBacklogNotesPageData(userId: string, page: PageRequest)
     }
 
     // Iterate on the notes properties (if exists) with their filter
-    for (let [property, filter] of Object.entries(page.filter || {}) as [QueryableFields, FilterOptions][]) {
+    for (let [field, filter] of Object.entries(page.filter || {}) as [QueryableFields, FilterOptions][]) {
 
         if (filter.match) {
             // Create the property match filter
-            where[property] = matchOperatorToMongoExpression(filter.match.matchOperator, filter.match.value);
+            where[field] = matchOperatorToMongoExpression(filter.match.matchOperator, filter.match.value);
         }
 
         if (filter.relation) {
-            where[property] = where[property] || {};
+            where[field] = where[field] || {};
             const operatorKey = relationOperatorToMongoOperator(filter.relation.relationOperator);
             // Append the property relation filter
-            where[property][operatorKey] = filter.relation.value;
+            where[field][operatorKey] = filter.relation.value;
         }
 
         if (filter.collection) {
-            where[property] = where[property] || {};
+            where[field] = where[field] || {};
             const operatorKey = collectionOperatorsToMongoOperator(filter.collection.collectionOperator);
             // Append the property collection filter
-            where[property][operatorKey] = filter.collection.values;
+            where[field][operatorKey] = filter.collection.values;
         }
 
         if (filter.range) {
             const operatorLess = relationOperatorToMongoOperator('lessOrEquals');
             const operatorGreater = relationOperatorToMongoOperator('greaterOrEquals');
             // Append the property range filter
-            where[property] = where[property] || {};
-            where[property][operatorGreater] = filter.range.from;
-            where[property][operatorLess] = filter.range.to;
+            where[field] = where[field] || {};
+            where[field][operatorGreater] = filter.range.from;
+            where[field][operatorLess] = filter.range.to;
         }
     }
 
@@ -116,7 +116,7 @@ export async function getBacklogNotesPageData(userId: string, page: PageRequest)
     const [notes, totalCount] = await notesRepository.findAndCount({
         select,
         where,
-        order: { ...page.orderBy },
+        order: page.orderBy || {},
         skip: page.fromIndex,
         take: page.pageSize,
     });

@@ -93,7 +93,7 @@ export type QueryableFields = 'name' | 'creationTime' | 'lastModifiedTime' | 'co
 
 export interface PageRequest {
     /** Order by note fields */
-    orderBy: { [field in QueryableFields]?: "ASC" | "DESC" },
+    orderBy?: { [field in QueryableFields]?: "ASC" | "DESC" },
     fromIndex: number;
     pageSize: number;
     filter?: {
