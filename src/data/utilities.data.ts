@@ -44,7 +44,7 @@ export function matchOperatorToMongoExpression(matchOperator: MatchOperators, va
     }
     return {
         $regex: expression,
-        $options: 'i', // Off case sensitivity
+        $options: 'i', // Off case sensitivity // TODO make sure it works with multiline etc.
     }
 
 }

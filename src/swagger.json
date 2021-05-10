@@ -253,7 +253,7 @@
 							}
 						},
 						"type": "object",
-						"description": "Order by note properties"
+						"description": "Order by note fields"
 					},
 					"fromIndex": {
 						"type": "number",
@@ -282,7 +282,6 @@
 					}
 				},
 				"required": [
-					"orderBy",
 					"fromIndex",
 					"pageSize"
 				],

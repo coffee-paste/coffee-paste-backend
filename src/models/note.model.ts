@@ -10,7 +10,6 @@ export class Note {
     @ObjectIdColumn({ name: '_id' })
     id: string;
 
-    // TODO: add index 
     /**
      * The note owner
      */
