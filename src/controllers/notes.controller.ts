@@ -18,40 +18,87 @@ import { NotesPage, NoteStatus, PageRequest } from "../core";
 import { Note } from "../models";
 import { notesService } from "../services";
 import express, { Response as ExResponse, Request as ExRequest } from "express";
-import { generateChannelKey } from "../security";
+import { generateChannelSession } from "../security";
+import { publishNoteEvent } from "../routes";
+import { NoteUpdateEvent } from "../core/channel.protocol";
 
 @Tags('Notes')
 @Route("notes")
 export class NotesController extends Controller {
 
+  /**
+   * Create new note in the workspace
+   * @param channelSid The front session channel, used to skip this channel while updating succeed action via WS 
+   * @returns The new note id
+   */
   @Security('jwt', ['user'])
   @Post("/")
-  public async createNote(@Request() request: ExRequest, @Body() body: { name?: string }): Promise<string> {
-    return await notesService.createNote(request.user.userId, body.name);
+  public async createNote(@Request() request: ExRequest, @Body() body: { name?: string }, @Header() channelSid?: string): Promise<string> {
+    const noteId = await notesService.createNote(request.user.userId, body.name);
+    publishNoteEvent(request.user.userId, {
+      noteId,
+      event: NoteUpdateEvent.NEW,
+      name: body.name,
+    }, channelSid);
+    return noteId;
   }
 
+  /**
+   * Move note from/to workspace/archive
+   * @param channelSid The front session channel, used to skip this channel while updating succeed action via WS 
+   */
   @Security('jwt', ['user'])
   @Put("/status/{noteId}")
-  public async setNotes(@Request() request: ExRequest, @Path() noteId: string, @Body() setNote: { status: NoteStatus }) {
-    return await notesService.setNoteStatus(noteId, setNote.status, request.user.userId);
+  public async setNotes(@Request() request: ExRequest, @Path() noteId: string, @Body() setNote: { status: NoteStatus }, @Header() channelSid?: string) {
+    await notesService.setNoteStatus(noteId, setNote.status, request.user.userId);
+    publishNoteEvent(request.user.userId, {
+      noteId,
+      event: setNote.status === NoteStatus.Backlog ? NoteUpdateEvent.NEW : NoteUpdateEvent.REMOVE,
+    }, channelSid);
   }
 
+  /**
+   * Set note content, (you can use also the WS channel API for that)
+   * @param channelSid The front session channel, used to skip this channel while updating succeed action via WS 
+   */
   @Security('jwt', ['user'])
   @Put("/content/{noteId}")
-  public async setNotesContent(@Request() request: ExRequest, @Path() noteId: string, @Body() content: { contentText: string, contentHTML: string }) {
-    return await notesService.setNoteContent(noteId, request.user.userId, content.contentText, content.contentHTML);
+  public async setNotesContent(@Request() request: ExRequest, @Path() noteId: string, @Body() content: { contentText: string, contentHTML: string }, @Header() channelSid?: string) {
+    await notesService.setNoteContent(noteId, request.user.userId, content.contentText, content.contentHTML);
+    publishNoteEvent(request.user.userId, {
+      noteId,
+      event: NoteUpdateEvent.FEED,
+      contentHTML: content.contentHTML,
+    }, channelSid);
   }
 
+  /**
+   * Set note name 
+   * @param channelSid The front session channel, used to skip this channel while updating succeed action via WS 
+   */
   @Security('jwt', ['user'])
   @Put("/name/{noteId}")
-  public async setNotesName(@Request() request: ExRequest, @Path() noteId: string, @Body() body: { name: string }) {
-    return await notesService.setNoteName(noteId, request.user.userId, body.name);
+  public async setNotesName(@Request() request: ExRequest, @Path() noteId: string, @Body() body: { name: string }, @Header() channelSid?: string) {
+    await notesService.setNoteName(noteId, request.user.userId, body.name);
+    publishNoteEvent(request.user.userId, {
+      noteId,
+      event: NoteUpdateEvent.UPDATE,
+      name: body.name,
+    }, channelSid);
   }
 
+  /**
+   * Permanently delete note 
+   * @param channelSid The front session channel, used to skip this channel while updating succeed action via WS 
+   */
   @Security('jwt', ['user'])
   @Delete("/{noteId}")
-  public async deleteNotes(@Request() request: ExRequest, @Path() noteId: string) {
-    return await notesService.deleteNotes(noteId, request.user.userId);
+  public async deleteNotes(@Request() request: ExRequest, @Path() noteId: string, @Header() channelSid?: string) {
+    await notesService.deleteNotes(noteId, request.user.userId);
+    publishNoteEvent(request.user.userId, {
+      noteId,
+      event: NoteUpdateEvent.REMOVE,
+    }, channelSid);
   }
 
   @Security('jwt', ['user'])
@@ -61,14 +108,15 @@ export class NotesController extends Controller {
   }
 
   /**
-   * Generating channel key in order to allow open web-socket channel.
-   * The key should append to the WS URL as channelKey param, the channel key is valid for 1 minute only.
+   * Generating channel session in order to allow open web-socket channel.
+   * The key should append to the WS URL as channelSession param, the channel key is valid for 1 minute only.
+   * Note to keep this session and send it in the REST request channelSid so the current channel will not send update about request sent from this client.
    * @returns Channel generate one-time key
    */
   @Security('jwt', ['user'])
-  @Get("/channel-key")
+  @Get("/channel-session")
   public async getChannelKey(@Request() request: ExRequest): Promise<string> {
-    return generateChannelKey(request.user);
+    return generateChannelSession(request.user);
   }
 
   @Security('jwt', ['user'])
@@ -86,7 +134,7 @@ export class NotesController extends Controller {
 
   @Security('jwt', ['user'])
   @Get("/{noteId}")
-  public async getNote(@Request() request: ExRequest, @Path() noteId: string) : Promise<Note> {
+  public async getNote(@Request() request: ExRequest, @Path() noteId: string): Promise<Note> {
     return await notesService.getNote(noteId, request.user.userId);
   }
 }

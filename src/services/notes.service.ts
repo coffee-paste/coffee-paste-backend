@@ -4,9 +4,16 @@ import { logger, notesContentUpdateDebounce, NotesPage, NoteStatus, PageRequest 
 
 class NotesService {
 
+  private loadDebounceContent(note: Note) {
+    const notesUpdateDebounceInfo = notesContentUpdateDebounce.get(note.id);
+    note.contentHTML = notesUpdateDebounceInfo?.lastState?.contentHTML ?? note.contentHTML;
+    note.contentText = notesUpdateDebounceInfo?.lastState?.contentText ?? note.contentText;
+  }
+
   public async getNote(noteId: string, userId: string): Promise<Note> {
     logger.info(`[NotesService.getNote] About to fetch note "${noteId}" backlog notes ...`);
     const note = await getNoteData(noteId, userId);
+    this.loadDebounceContent(note);
     logger.info(`[NotesService.getNote]Fetch note "${noteId}" succeed`);
     return note;
   }
@@ -16,9 +23,7 @@ class NotesService {
     const notes = await getOpenNotesData(userId);
     // If update arrived from client but not flush yet to the DB, update the workspace notes
     for (const note of notes) {
-      const  notesUpdateDebounceInfo = notesContentUpdateDebounce.get(note.id);
-      note.contentHTML = notesUpdateDebounceInfo?.lastState?.contentHTML ?? note.contentHTML;
-      note.contentText = notesUpdateDebounceInfo?.lastState?.contentText ?? note.contentText;
+      this.loadDebounceContent(note);
     }
     logger.info(`[NotesService.getOpenNotes] Getting all user "${userId}" workspace notes succeed`);
     return notes;
@@ -27,6 +32,9 @@ class NotesService {
   public async getBacklogNotes(userId: string): Promise<Note[]> {
     logger.info(`[NotesService.getBacklogNotes] About to get all user "${userId}" backlog notes ...`);
     const notes = await getBacklogNotesData(userId);
+    for (const note of notes) {
+      this.loadDebounceContent(note);
+    }
     logger.info(`[NotesService.getBacklogNotes] Getting all user "${userId}" backlog notes succeed`);
     return notes;
   }
