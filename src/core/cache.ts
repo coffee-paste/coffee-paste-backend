@@ -42,7 +42,7 @@ export const notesContentUpdateDebounce = new Cache<NotesUpdateDebounceInfo>(
     false // in order to use debounceFunc for each note, don't clone the JS object 
 );
 
-export const channelKeys = new Cache<VerifiedUser>(
+export const channelSessions = new Cache<VerifiedUser>(
     Duration.FromMinutes(1),
     Duration.FromMinutes(0.5),
     false // don't clone the JS object 

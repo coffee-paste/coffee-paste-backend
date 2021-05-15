@@ -34,21 +34,6 @@ export interface VerifiedUser {
     userId: string;
 }
 
-/**
- * Note update message structure
- */
-export interface NoteUpdate {
-    noteId: string;
-    contentHTML: string;
-}
-
-/**
- * Incoming note update structure (including the plain text content)
- */
-export interface IncomingNoteUpdate extends NoteUpdate {
-    contentText: string;
-}
-
 // Define the express verified user extension
 declare global {
     namespace Express {
@@ -61,7 +46,8 @@ declare global {
 // Extend the WS object
 export class VerifiedWebSocket extends WebSocket {
     user: VerifiedUser;
-    id: string;
+    /** The WS session */
+    sid: string;
 }
 
 export type MatchOperators = 'startWith' | 'contains' | 'notContains' | 'endWith' | 'equals' | 'notEquals';

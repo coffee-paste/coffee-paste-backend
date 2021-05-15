@@ -1,6 +1,6 @@
 import express, { Response as ExResponse, Request as ExRequest } from "express";
 import * as jwt from 'jsonwebtoken';
-import { channelKeys, logger, VerifiedUser } from "../core";
+import { channelSessions, logger, VerifiedUser } from "../core";
 import * as uuid from 'uuid';
 
 export const AUTHENTICATION_HEADER = "authentication";
@@ -12,22 +12,22 @@ if (!JWT_SECRET) {
     process.exit();
 }
 
-export function generateChannelKey(verifiedUser: VerifiedUser): string {
-    const channelKey = uuid.v4();
-    channelKeys.set(channelKey, verifiedUser);
-    logger.info(`[verifyChannelKey.generateChannelKey] Generating for user "${verifiedUser.userId}"  channelKey "${channelKey}" succeed`);
-    return channelKey;
+export function generateChannelSession(verifiedUser: VerifiedUser): string {
+    const channelSession = uuid.v4();
+    channelSessions.set(channelSession, verifiedUser);
+    logger.info(`[verifyChannelKey.generateChannelSession] Generating for user "${verifiedUser.userId}"  channelSession "${channelSession}" succeed`);
+    return channelSession;
 }
 
-export function verifyChannelKey(channelKey: string): VerifiedUser {
-    const verifiedUser = channelKeys.get(channelKey);
+export function verifyChannelSession(channelKey: string): VerifiedUser {
+    const verifiedUser = channelSessions.get(channelKey);
     // The key uses is for only one time
-    channelKeys.delete(channelKey);
+    channelSessions.delete(channelKey);
     if (!verifiedUser) {
-        logger.error(`[verifyChannelKey.verifyJwtToken] channelKey "${channelKey}" invalid`);
-        throw new Error(`channelKey invalid`);
+        logger.error(`[verifyChannelSession.verifyJwtToken] channelSession "${channelKey}" invalid`);
+        throw new Error(`channelSession invalid`);
     }
-    logger.info(`[verifyChannelKey.verifyJwtToken] Validating channel using for user "${verifiedUser.userId}"  using channelKey "${channelKey}" succeed`);
+    logger.info(`[verifyChannelSession.verifyJwtToken] Validating channel using for user "${verifiedUser.userId}"  using channelSession "${channelKey}" succeed`);
     return verifiedUser;
 }
 

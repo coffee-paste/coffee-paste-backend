@@ -36,6 +36,44 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"User": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "User unique id"
+					},
+					"uniqueOAuthId": {
+						"type": "string",
+						"description": "The user logon provider unique id\r\nTODO: add index"
+					},
+					"email": {
+						"type": "string",
+						"description": "The user unique email (can be )\r\nTODO: add index"
+					},
+					"displayName": {
+						"type": "string",
+						"description": "The user display name"
+					},
+					"avatarBase64": {
+						"type": "string",
+						"description": "The user avatar as Base64 string"
+					},
+					"openNotes": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array",
+						"description": "The open notes (user workspace) collection"
+					}
+				},
+				"required": [
+					"id",
+					"uniqueOAuthId",
+					"openNotes"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"NoteStatus": {
 				"description": "Note status",
 				"enum": [
@@ -287,44 +325,6 @@
 				],
 				"type": "object",
 				"additionalProperties": false
-			},
-			"User": {
-				"properties": {
-					"id": {
-						"type": "string",
-						"description": "User unique id"
-					},
-					"uniqueOAuthId": {
-						"type": "string",
-						"description": "The user logon provider unique id\r\nTODO: add index"
-					},
-					"email": {
-						"type": "string",
-						"description": "The user unique email (can be )\r\nTODO: add index"
-					},
-					"displayName": {
-						"type": "string",
-						"description": "The user display name"
-					},
-					"avatarBase64": {
-						"type": "string",
-						"description": "The user avatar as Base64 string"
-					},
-					"openNotes": {
-						"items": {
-							"type": "string"
-						},
-						"type": "array",
-						"description": "The open notes (user workspace) collection"
-					}
-				},
-				"required": [
-					"id",
-					"uniqueOAuthId",
-					"openNotes"
-				],
-				"type": "object",
-				"additionalProperties": false
 			}
 		},
 		"securitySchemes": {
@@ -395,6 +395,55 @@
 				"parameters": []
 			}
 		},
+		"/users/profile": {
+			"get": {
+				"operationId": "GetUserProfile",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/User"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Users"
+				],
+				"security": [
+					{
+						"jwt": [
+							"user"
+						]
+					}
+				],
+				"parameters": []
+			}
+		},
+		"/users": {
+			"delete": {
+				"operationId": "DeleteUser",
+				"responses": {
+					"204": {
+						"description": "No content"
+					}
+				},
+				"tags": [
+					"Users"
+				],
+				"security": [
+					{
+						"jwt": [
+							"user"
+						]
+					}
+				],
+				"parameters": []
+			}
+		},
 		"/notes": {
 			"post": {
 				"operationId": "CreateNote",
@@ -410,6 +459,7 @@
 						}
 					}
 				},
+				"description": "Create new note in the workspace",
 				"tags": [
 					"Notes"
 				],
@@ -420,7 +470,17 @@
 						]
 					}
 				],
-				"parameters": [],
+				"parameters": [
+					{
+						"description": "The front session channel, used to skip this channel while updating succeed action via WS",
+						"in": "header",
+						"name": "channelSid",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
 				"requestBody": {
 					"required": true,
 					"content": {
@@ -446,6 +506,7 @@
 						"description": "No content"
 					}
 				},
+				"description": "Move note from/to workspace/archive",
 				"tags": [
 					"Notes"
 				],
@@ -461,6 +522,15 @@
 						"in": "path",
 						"name": "noteId",
 						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "The front session channel, used to skip this channel while updating succeed action via WS",
+						"in": "header",
+						"name": "channelSid",
+						"required": false,
 						"schema": {
 							"type": "string"
 						}
@@ -494,6 +564,7 @@
 						"description": "No content"
 					}
 				},
+				"description": "Set note content, (you can use also the WS channel API for that)",
 				"tags": [
 					"Notes"
 				],
@@ -509,6 +580,15 @@
 						"in": "path",
 						"name": "noteId",
 						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "The front session channel, used to skip this channel while updating succeed action via WS",
+						"in": "header",
+						"name": "channelSid",
+						"required": false,
 						"schema": {
 							"type": "string"
 						}
@@ -546,6 +626,7 @@
 						"description": "No content"
 					}
 				},
+				"description": "Set note name",
 				"tags": [
 					"Notes"
 				],
@@ -561,6 +642,15 @@
 						"in": "path",
 						"name": "noteId",
 						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "The front session channel, used to skip this channel while updating succeed action via WS",
+						"in": "header",
+						"name": "channelSid",
+						"required": false,
 						"schema": {
 							"type": "string"
 						}
@@ -594,6 +684,7 @@
 						"description": "No content"
 					}
 				},
+				"description": "Permanently delete note",
 				"tags": [
 					"Notes"
 				],
@@ -609,6 +700,15 @@
 						"in": "path",
 						"name": "noteId",
 						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "The front session channel, used to skip this channel while updating succeed action via WS",
+						"in": "header",
+						"name": "channelSid",
+						"required": false,
 						"schema": {
 							"type": "string"
 						}
@@ -682,7 +782,7 @@
 				"parameters": []
 			}
 		},
-		"/notes/channel-key": {
+		"/notes/channel-session": {
 			"get": {
 				"operationId": "GetChannelKey",
 				"responses": {
@@ -697,7 +797,7 @@
 						}
 					}
 				},
-				"description": "Generating channel key in order to allow open web-socket channel.\r\nThe key should append to the WS URL as channelKey param, the channel key is valid for 1 minute only.",
+				"description": "Generating channel session in order to allow open web-socket channel.\r\nThe key should append to the WS URL as channelSession param, the channel key is valid for 1 minute only.\r\nNote to keep this session and send it in the REST request channelSid so the current channel will not send update about request sent from this client.",
 				"tags": [
 					"Notes"
 				],
@@ -778,55 +878,6 @@
 						}
 					}
 				}
-			}
-		},
-		"/users/profile": {
-			"get": {
-				"operationId": "GetUserProfile",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/User"
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"Users"
-				],
-				"security": [
-					{
-						"jwt": [
-							"user"
-						]
-					}
-				],
-				"parameters": []
-			}
-		},
-		"/users": {
-			"delete": {
-				"operationId": "DeleteUser",
-				"responses": {
-					"204": {
-						"description": "No content"
-					}
-				},
-				"tags": [
-					"Users"
-				],
-				"security": [
-					{
-						"jwt": [
-							"user"
-						]
-					}
-				],
-				"parameters": []
 			}
 		}
 	},
