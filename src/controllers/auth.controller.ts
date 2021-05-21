@@ -11,7 +11,7 @@ import {
   Tags,
   Request,
 } from "tsoa";
-import { logger, OAuth2Session } from "../core";
+import { AuthMethod, AuthScope, logger, OAuth2Session } from "../core";
 import { authService, jwtExpiresIn } from "../services";
 import express, { Response as ExResponse, Request as ExRequest } from "express";
 import ms from "ms";
@@ -43,7 +43,7 @@ export class AuthController extends Controller {
     );
   }
 
-  @Security('jwt', ['user'])
+  @Security(AuthMethod.JWT, [AuthScope.USER])
   @Post("/logout")
   public async logout(@Request() request: ExRequest) {
     logger.info(`[AuthController.logout] user "${request.user.userId}" logout`);

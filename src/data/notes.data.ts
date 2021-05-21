@@ -1,8 +1,22 @@
-import { getMongoRepository } from "typeorm";
-import { logger } from "../core";
+import { FindConditions, getMongoRepository, ObjectLiteral } from "typeorm";
+import { FilterOptions, logger, NotesPage, PageRequest, QueryableFields } from "../core";
 import { Note, User } from "../models";
 import { getUserData, removeNoteFromUserOpenNotesData, addNoteToUserOpenNotesData, getOpenNotesLazyData } from "./users.data";
 import * as mongodb from "mongodb";
+import { collectionOperatorsToMongoOperator, matchOperatorToMongoExpression, relationOperatorToMongoOperator } from "./utilities.data";
+
+export async function getNoteData(noteId: string, userId: string): Promise<Note> {
+    logger.info(`[notes.data.getNoteData] About to fetch note id "${noteId}"...`);
+    const notesRepository = getMongoRepository(Note);
+    const notes = await notesRepository.findOneOrFail({
+        where: {
+            _id: new mongodb.ObjectID(noteId) as any,
+            userId: new mongodb.ObjectID(userId) as any
+        }
+    });
+    logger.info(`[notes.data.getNoteData] Fetch note id "${noteId}" succeed`);
+    return notes;
+}
 
 export async function getOpenNotesData(userId: string): Promise<Note[]> {
     logger.info(`[notes.data.getOpenNotesData] About to fetch all workspace notes for user "${userId}"...`);
@@ -37,11 +51,80 @@ export async function getBacklogNotesData(userId: string): Promise<Note[]> {
             }
         },
         order: {
-            lastModifiedTime: 'DESC'
+            lastModifiedTime: 'DESC',
+
         }
     });
-    logger.info(`[notes.data.getBacklogNotesData] Fetch backlog notes (${notes.length}) for user "${userId}" succeed`);
+    logger.info(`[notes.data.getBacklogNotesData] Fetch backlog notes (${notes?.length}) for user "${userId}" succeed`);
     return notes;
+}
+
+export async function getBacklogNotesPageData(userId: string, page: PageRequest): Promise<NotesPage> {
+    logger.info(`[notes.data.getBacklogNotesPageData] About to fetch all backlog page "${JSON.stringify(page)}" notes for user "${userId}" ...`);
+    // In order to fetch only notes that *not* in the user open notes, fetch the user info first
+    const user = await getUserData(userId);
+    const notesRepository = getMongoRepository(Note);
+
+    // Do not query content if not necessary
+    const select: (keyof Note)[] = ['id', 'name', 'creationTime', 'lastModifiedTime'];
+    if (page.filter?.contentText) {
+        select.push('contentText');
+    }
+
+    // Create the initial filter, with the notes to show to the current available in the user archive/backlog
+    const where: ObjectLiteral | FindConditions<Note> = {
+        userId: user.toObjectId(),
+        _id: {
+            $nin: user.toOpenNoteObjectIDs()
+        },
+    }
+
+    // Iterate on the notes properties (if exists) with their filter
+    for (let [field, filter] of Object.entries(page.filter || {}) as [QueryableFields, FilterOptions][]) {
+
+        if (filter.match) {
+            // Create the property match filter
+            where[field] = matchOperatorToMongoExpression(filter.match.matchOperator, filter.match.value);
+        }
+
+        if (filter.relation) {
+            where[field] = where[field] || {};
+            const operatorKey = relationOperatorToMongoOperator(filter.relation.relationOperator);
+            // Append the property relation filter
+            where[field][operatorKey] = filter.relation.value;
+        }
+
+        if (filter.collection) {
+            where[field] = where[field] || {};
+            const operatorKey = collectionOperatorsToMongoOperator(filter.collection.collectionOperator);
+            // Append the property collection filter
+            where[field][operatorKey] = filter.collection.values;
+        }
+
+        if (filter.range) {
+            const operatorLess = relationOperatorToMongoOperator('lessOrEquals');
+            const operatorGreater = relationOperatorToMongoOperator('greaterOrEquals');
+            // Append the property range filter
+            where[field] = where[field] || {};
+            where[field][operatorGreater] = filter.range.from;
+            where[field][operatorLess] = filter.range.to;
+        }
+    }
+
+
+
+    const [notes, totalCount] = await notesRepository.findAndCount({
+        select,
+        where,
+        order: page.orderBy || {},
+        skip: page.fromIndex,
+        take: page.pageSize,
+    });
+    logger.info(`[notes.data.getBacklogNotesPageData] Fetch backlog notes (${notes?.length}) for user "${userId}" succeed`);
+    return {
+        notes,
+        totalCount,
+    };
 }
 
 export async function createNoteData(userId: string, name?: string): Promise<string> {

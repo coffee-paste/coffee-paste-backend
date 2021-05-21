@@ -1,17 +1,29 @@
 import { Note, User } from "../models";
-import { createNoteData, getBacklogNotesData, getOpenNotesData, removeNoteFromUserOpenNotesData, addNoteToUserOpenNotesData, deleteNoteData, setNoteContentData, setOpenNoteContentData, setNoteNameData } from "../data";
-import { logger, notesContentUpdateDebounce, NoteStatus } from "../core";
+import { createNoteData, getBacklogNotesData, getOpenNotesData, removeNoteFromUserOpenNotesData, addNoteToUserOpenNotesData, deleteNoteData, setNoteContentData, setOpenNoteContentData, setNoteNameData, getBacklogNotesPageData, getNoteData } from "../data";
+import { logger, notesContentUpdateDebounce, NotesPage, NoteStatus, PageRequest } from "../core";
 
 class NotesService {
+
+  private loadDebounceContent(note: Note) {
+    const notesUpdateDebounceInfo = notesContentUpdateDebounce.get(note.id);
+    note.contentHTML = notesUpdateDebounceInfo?.lastState?.contentHTML ?? note.contentHTML;
+    note.contentText = notesUpdateDebounceInfo?.lastState?.contentText ?? note.contentText;
+  }
+
+  public async getNote(noteId: string, userId: string): Promise<Note> {
+    logger.info(`[NotesService.getNote] About to fetch note "${noteId}" backlog notes ...`);
+    const note = await getNoteData(noteId, userId);
+    this.loadDebounceContent(note);
+    logger.info(`[NotesService.getNote]Fetch note "${noteId}" succeed`);
+    return note;
+  }
 
   public async getWorkspaceNotes(userId: string): Promise<Note[]> {
     logger.info(`[NotesService.getOpenNotes] About to get all user "${userId}" workspace notes ...`);
     const notes = await getOpenNotesData(userId);
     // If update arrived from client but not flush yet to the DB, update the workspace notes
     for (const note of notes) {
-      const  notesUpdateDebounceInfo = notesContentUpdateDebounce.get(note.id);
-      note.contentHTML = notesUpdateDebounceInfo?.lastState?.contentHTML ?? note.contentHTML;
-      note.contentText = notesUpdateDebounceInfo?.lastState?.contentText ?? note.contentText;
+      this.loadDebounceContent(note);
     }
     logger.info(`[NotesService.getOpenNotes] Getting all user "${userId}" workspace notes succeed`);
     return notes;
@@ -20,7 +32,17 @@ class NotesService {
   public async getBacklogNotes(userId: string): Promise<Note[]> {
     logger.info(`[NotesService.getBacklogNotes] About to get all user "${userId}" backlog notes ...`);
     const notes = await getBacklogNotesData(userId);
+    for (const note of notes) {
+      this.loadDebounceContent(note);
+    }
     logger.info(`[NotesService.getBacklogNotes] Getting all user "${userId}" backlog notes succeed`);
+    return notes;
+  }
+
+  public async getBacklogNotesPage(userId: string, page: PageRequest): Promise<NotesPage> {
+    logger.info(`[NotesService.getBacklogNotesPage] About to get all user "${userId}" backlog notes ...`);
+    const notes = await getBacklogNotesPageData(userId, page);
+    logger.info(`[NotesService.getBacklogNotesPage] Getting all user "${userId}" backlog notes succeed`);
     return notes;
   }
 
