@@ -94,3 +94,13 @@ export interface NotesPage {
     /** Total *available* notes */
     totalCount: number;
 }
+
+export enum AuthMethod {
+    JWT = 'jwt',
+    API_KEY = 'api_key',
+}
+
+export enum AuthScope {
+    USER = 'user',
+    ADMIN = 'admin',
+}
