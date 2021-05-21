@@ -332,6 +332,11 @@
 				"type": "apiKey",
 				"name": "authentication",
 				"in": "header"
+			},
+			"api_key": {
+				"type": "apiKey",
+				"name": "api_key",
+				"in": "header"
 			}
 		}
 	},
@@ -395,9 +400,9 @@
 				"parameters": []
 			}
 		},
-		"/users/profile": {
+		"/users/{userId}": {
 			"get": {
-				"operationId": "GetUserProfile",
+				"operationId": "GetUser",
 				"responses": {
 					"200": {
 						"description": "Ok",
@@ -415,6 +420,93 @@
 				],
 				"security": [
 					{
+						"api_key": [
+							"admin"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "userId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			},
+			"delete": {
+				"operationId": "DeleteUserByAdmin",
+				"responses": {
+					"204": {
+						"description": "No content"
+					}
+				},
+				"tags": [
+					"Users"
+				],
+				"security": [
+					{
+						"api_key": [
+							"admin"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "userId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/users": {
+			"get": {
+				"operationId": "GetUsers",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/User"
+									},
+									"type": "array"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Users"
+				],
+				"security": [
+					{
+						"api_key": [
+							"admin"
+						]
+					}
+				],
+				"parameters": []
+			},
+			"delete": {
+				"operationId": "DeleteUser",
+				"responses": {
+					"204": {
+						"description": "No content"
+					}
+				},
+				"tags": [
+					"Users"
+				],
+				"security": [
+					{
 						"jwt": [
 							"user"
 						]
@@ -423,12 +515,19 @@
 				"parameters": []
 			}
 		},
-		"/users": {
-			"delete": {
-				"operationId": "DeleteUser",
+		"/users/profile": {
+			"get": {
+				"operationId": "GetUserProfile",
 				"responses": {
-					"204": {
-						"description": "No content"
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/User"
+								}
+							}
+						}
 					}
 				},
 				"tags": [

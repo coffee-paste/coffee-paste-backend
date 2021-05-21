@@ -1,9 +1,10 @@
 import express, { Response as ExResponse, Request as ExRequest } from "express";
 import * as jwt from 'jsonwebtoken';
-import { channelSessions, logger, VerifiedUser } from "../core";
+import { AuthMethod, channelSessions, logger, VerifiedUser } from "../core";
 import * as uuid from 'uuid';
 
 export const AUTHENTICATION_HEADER = "authentication";
+export const API_KEY_HEADER = "api_key";
 export const JWT_COOKIE_NAME = "jwt_token";
 
 export const JWT_SECRET = process.env.JWT_SECRET || '';
@@ -11,6 +12,8 @@ if (!JWT_SECRET) {
     logger.fatal('You must set the JWT_SECRET!');
     process.exit();
 }
+
+export const API_KEY = process.env.API_KEY || '';
 
 export function generateChannelSession(verifiedUser: VerifiedUser): string {
     const channelSession = uuid.v4();
@@ -45,11 +48,27 @@ export function verifyJwtToken(token: string): Promise<VerifiedUser> {
     });
 }
 
-
 export async function expressAuthentication(request: ExRequest, securityName: string, scopes?: string[]): Promise<VerifiedUser> {
     const logPrefix = `[expressAuthentication][${request.method} ${request.url}]`
 
-    if (securityName !== "jwt") {
+    // If the request required api-key validation
+    if (securityName === AuthMethod.API_KEY) {
+
+        if (!API_KEY) {
+            logger.error(`${logPrefix} In order to logon with api you have to set the "${API_KEY}" variable`);
+            new Error(`unknown security name ${securityName}`);
+        }
+
+        if (API_KEY === request.headers[API_KEY_HEADER]) {
+            // As admin, there is no relevant user id
+            return { userId: '' };
+        }
+        logger.error(`${logPrefix} No correct api-key provided`);
+        new Error(`unknown api key`);
+    }
+
+
+    if (securityName !== AuthMethod.JWT) {
         logger.fatal(`${logPrefix} unknown security name ${securityName}`);
         new Error(`unknown security name ${securityName}`);
     }

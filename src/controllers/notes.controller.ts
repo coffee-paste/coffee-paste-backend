@@ -14,7 +14,7 @@ import {
   Request,
   Tags,
 } from "tsoa";
-import { NotesPage, NoteStatus, PageRequest } from "../core";
+import { AuthMethod, AuthScope, NotesPage, NoteStatus, PageRequest } from "../core";
 import { Note } from "../models";
 import { notesService } from "../services";
 import express, { Response as ExResponse, Request as ExRequest } from "express";
@@ -31,7 +31,7 @@ export class NotesController extends Controller {
    * @param channelSid The front session channel, used to skip this channel while updating succeed action via WS 
    * @returns The new note id
    */
-  @Security('jwt', ['user'])
+  @Security(AuthMethod.JWT, [AuthScope.USER])
   @Post("/")
   public async createNote(@Request() request: ExRequest, @Body() body: { name?: string }, @Header() channelSid?: string): Promise<string> {
     const noteId = await notesService.createNote(request.user.userId, body.name);
@@ -47,7 +47,7 @@ export class NotesController extends Controller {
    * Move note from/to workspace/archive
    * @param channelSid The front session channel, used to skip this channel while updating succeed action via WS 
    */
-  @Security('jwt', ['user'])
+  @Security(AuthMethod.JWT, [AuthScope.USER])
   @Put("/status/{noteId}")
   public async setNotes(@Request() request: ExRequest, @Path() noteId: string, @Body() setNote: { status: NoteStatus }, @Header() channelSid?: string) {
     await notesService.setNoteStatus(noteId, setNote.status, request.user.userId);
@@ -61,7 +61,7 @@ export class NotesController extends Controller {
    * Set note content, (you can use also the WS channel API for that)
    * @param channelSid The front session channel, used to skip this channel while updating succeed action via WS 
    */
-  @Security('jwt', ['user'])
+  @Security(AuthMethod.JWT, [AuthScope.USER])
   @Put("/content/{noteId}")
   public async setNotesContent(@Request() request: ExRequest, @Path() noteId: string, @Body() content: { contentText: string, contentHTML: string }, @Header() channelSid?: string) {
     await notesService.setNoteContent(noteId, request.user.userId, content.contentText, content.contentHTML);
@@ -76,7 +76,7 @@ export class NotesController extends Controller {
    * Set note name 
    * @param channelSid The front session channel, used to skip this channel while updating succeed action via WS 
    */
-  @Security('jwt', ['user'])
+  @Security(AuthMethod.JWT, [AuthScope.USER])
   @Put("/name/{noteId}")
   public async setNotesName(@Request() request: ExRequest, @Path() noteId: string, @Body() body: { name: string }, @Header() channelSid?: string) {
     await notesService.setNoteName(noteId, request.user.userId, body.name);
@@ -91,7 +91,7 @@ export class NotesController extends Controller {
    * Permanently delete note 
    * @param channelSid The front session channel, used to skip this channel while updating succeed action via WS 
    */
-  @Security('jwt', ['user'])
+  @Security(AuthMethod.JWT, [AuthScope.USER])
   @Delete("/{noteId}")
   public async deleteNotes(@Request() request: ExRequest, @Path() noteId: string, @Header() channelSid?: string) {
     await notesService.deleteNotes(noteId, request.user.userId);
@@ -101,7 +101,7 @@ export class NotesController extends Controller {
     }, channelSid);
   }
 
-  @Security('jwt', ['user'])
+  @Security(AuthMethod.JWT, [AuthScope.USER])
   @Get("/workspace")
   public async getOpenNotes(@Request() request: ExRequest): Promise<Note[]> {
     return await notesService.getWorkspaceNotes(request.user.userId);
@@ -113,26 +113,26 @@ export class NotesController extends Controller {
    * Note to keep this session and send it in the REST request channelSid so the current channel will not send update about request sent from this client.
    * @returns Channel generate one-time key
    */
-  @Security('jwt', ['user'])
+  @Security(AuthMethod.JWT, [AuthScope.USER])
   @Get("/channel-session")
   public async getChannelKey(@Request() request: ExRequest): Promise<string> {
     return generateChannelSession(request.user);
   }
 
-  @Security('jwt', ['user'])
+  @Security(AuthMethod.JWT, [AuthScope.USER])
   @Get("/backlog")
   public async getBacklogNotes(@Request() request: ExRequest): Promise<Note[]> {
     return await notesService.getBacklogNotes(request.user.userId);
   }
 
   // It's post request only because of TSOA limitation for body in get requests
-  @Security('jwt', ['user'])
+  @Security(AuthMethod.JWT, [AuthScope.USER])
   @Post("/backlog/page")
   public async getBacklogNotesPage(@Request() request: ExRequest, @Body() page: PageRequest): Promise<NotesPage> {
     return await notesService.getBacklogNotesPage(request.user.userId, page);
   }
 
-  @Security('jwt', ['user'])
+  @Security(AuthMethod.JWT, [AuthScope.USER])
   @Get("/{noteId}")
   public async getNote(@Request() request: ExRequest, @Path() noteId: string): Promise<Note> {
     return await notesService.getNote(noteId, request.user.userId);
