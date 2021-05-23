@@ -4,7 +4,7 @@ import { RegisterRoutes } from "./routes";
 import swaggerUi from "swagger-ui-express";
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
-import { sanitizeExpressMiddleware } from 'generic-json-sanitizer';
+import { sanitizeExpressMiddlewareAsync } from 'generic-json-sanitizer';
 import helmet from 'helmet';
 import { logger } from "./core";
 import cookieParser from 'cookie-parser';
@@ -61,16 +61,19 @@ app.use(cookieParser()); // Parse every request cookie to readable json.
 // 
 app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
 
+  // Do not sanitize empty body :)
+  if (!req.body) {
+    next();
+    return;
+  }
+
   // Skip XSS sanitation for HTML content sent from the user fpr his note.
   if (req.url.startsWith('/notes/content/') && req.method.toLowerCase() === 'put') {
     next();
     return;
   }
 
-  sanitizeExpressMiddleware(req, res, next, {
-    allowedAttributes: {},
-    allowedTags: [],
-  });
+  sanitizeExpressMiddlewareAsync(req, res, next);
 });
 
 // After *ALL* security checks and data validation, run the TSOA router
