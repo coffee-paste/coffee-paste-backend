@@ -20,6 +20,19 @@ import { AuthMethod, AuthScope } from "../core";
 @Tags('Users')
 @Route("users")
 export class UsersController extends Controller {
+  
+  @Security(AuthMethod.JWT, [AuthScope.USER])
+  @Get('/profile')
+  public async getUserProfile(@Request() request: ExRequest) {
+    return await usersService.getUser(request.user.userId);
+  }
+
+  @Security(AuthMethod.JWT, [AuthScope.USER])
+  @Delete()
+  public async deleteUser(@Request() request: ExRequest) {
+    return await usersService.deleteUser(request.user.userId);
+  }
+
   @Security(AuthMethod.API_KEY, [AuthScope.ADMIN])
   @Get("{userId}")
   public async getUser(@Path() userId: string): Promise<User> {
@@ -36,17 +49,5 @@ export class UsersController extends Controller {
   @Delete('{userId}')
   public async deleteUserByAdmin(@Path() userId: string) {
     return await usersService.deleteUser(userId);
-  }
-
-  @Security(AuthMethod.JWT, [AuthScope.USER])
-  @Get('/profile')
-  public async getUserProfile(@Request() request: ExRequest) {
-    return await usersService.getUser(request.user.userId);
-  }
-
-  @Security(AuthMethod.JWT, [AuthScope.USER])
-  @Delete()
-  public async deleteUser(@Request() request: ExRequest) {
-    return await usersService.deleteUser(request.user.userId);
   }
 }
