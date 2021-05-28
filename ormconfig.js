@@ -13,6 +13,8 @@ module.exports = {
     entities: ['dist/models/**/*.js'],
     synchronize: false,
     logging: false,
+    reconnectTries: 12 * 60 * 2,
+    reconnectInterval: 1000 * 5,
     migrations: isMigrationCommand() ? ['src/migrations/**/*.ts'] : [],
     cli: {
         entitiesDir: 'src/models',
