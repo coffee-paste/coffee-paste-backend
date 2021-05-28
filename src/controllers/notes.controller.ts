@@ -125,7 +125,7 @@ export class NotesController extends Controller {
     return await notesService.getBacklogNotes(request.user.userId);
   }
 
-  // It's post request only because of TSOA limitation for body in get requests
+  // It's a post request only because of TSOA limitation for body in get requests
   @Security(AuthMethod.JWT, [AuthScope.USER])
   @Post("/backlog/page")
   public async getBacklogNotesPage(@Request() request: ExRequest, @Body() page: PageRequest): Promise<NotesPage> {
@@ -136,5 +136,20 @@ export class NotesController extends Controller {
   @Get("/{noteId}")
   public async getNote(@Request() request: ExRequest, @Path() noteId: string): Promise<Note> {
     return await notesService.getNote(noteId, request.user.userId);
+  }
+
+
+  ////////////// ADMIN API's //////////////////
+
+  @Security(AuthMethod.API_KEY, [AuthScope.ADMIN])
+  @Get("workspace/{userId}")
+  public async getOpenNotesByUser(@Path() userId: string): Promise<Note[]> {
+    return await notesService.getWorkspaceNotes(userId);
+  }
+
+  @Security(AuthMethod.API_KEY, [AuthScope.ADMIN])
+  @Get("backlog/{userId}")
+  public async getBacklogNotesByUser(@Path() userId: string): Promise<Note[]> {
+    return await notesService.getBacklogNotes(userId);
   }
 }

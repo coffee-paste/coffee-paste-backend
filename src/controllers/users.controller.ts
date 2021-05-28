@@ -33,6 +33,8 @@ export class UsersController extends Controller {
     return await usersService.deleteUser(request.user.userId);
   }
 
+  ////////////// ADMIN API's //////////////////
+
   @Security(AuthMethod.API_KEY, [AuthScope.ADMIN])
   @Get("{userId}")
   public async getUser(@Path() userId: string): Promise<User> {
