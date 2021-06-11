@@ -1,6 +1,7 @@
 import { getMongoRepository, ObjectID } from "typeorm";
 import { logger } from "../core";
 import { Note, User } from "../models";
+import * as mongodb from "mongodb";
 
 /**
  * Hold last known open-notes cache map by userId.
@@ -13,17 +14,90 @@ const userOpenNotesCache: {
 export async function getUserData(userId: string): Promise<User> {
     logger.info(`[users.data.getUserData] About to fetch user "${userId}" info ...`);
     const usersRepository = getMongoRepository(User);
-    const user = await usersRepository.findOneOrFail(userId);
+    const user = await usersRepository.findOneOrFail(({
+        where: {
+            _id: new mongodb.ObjectID(userId) as any,
+        },
+        select : [ 'id', 'displayName', 'email', 'openNotes', 'avatarBase64', 'passwordVersionCodeName', 'certificateVersionCodeName' ]
+    }));
     logger.info(`[users.data.getUserData] Fetch user "${userId}" info succeed`);
     // Update user workspace cache 
     userOpenNotesCache[userId] = user.openNotes;
     return user;
 }
 
+export async function getUserDecryptLocalKeyData(userId: string): Promise<string | undefined> {
+    logger.info(`[users.data.getUserDecryptLocalKeyData] About to fetch user "${userId}" decryptLocalKey ...`);
+    const usersRepository = getMongoRepository(User);
+    const user = await usersRepository.findOneOrFail(({
+        where: {
+            _id: new mongodb.ObjectID(userId) as any,
+        },
+        select : [ 'decryptLocalKey' ]
+    }));
+    logger.info(`[users.data.getUserDecryptLocalKeyData] Fetch user "${userId}" decryptLocalKey succeed`);
+   
+    return user.decryptLocalKey;
+}
+
+export async function setUserDecryptLocalKeyData(userId: string, decryptLocalKey: string) {
+    logger.info(`[users.data.setUserDecryptLocalKeyData] About to set user "${userId}" decryptLocalKey ...`);
+    const usersRepository = getMongoRepository(User);
+    await usersRepository.update({ id: new mongodb.ObjectID(userId) as any }, { decryptLocalKey });
+
+    logger.info(`[users.data.setUserDecryptLocalKeyData] Set user "${userId}" decryptLocalKey succeed`);
+}
+
+export async function getUserPasswordVersionCodeNameData(userId: string): Promise<string | undefined> {
+    logger.info(`[users.data.getUserPasswordVersionCodeNameData] About to fetch user "${userId}" passwordVersionCodeName ...`);
+    const usersRepository = getMongoRepository(User);
+    const user = await usersRepository.findOneOrFail(({
+        where: {
+            _id: new mongodb.ObjectID(userId) as any,
+        },
+        select : [ 'passwordVersionCodeName' ]
+    }));
+    logger.info(`[users.data.getUserPasswordVersionCodeNameData] Fetch user "${userId}" passwordVersionCodeName succeed`);
+   
+    return user.passwordVersionCodeName;
+}
+
+export async function getUserCertificateVersionCodeNameData(userId: string): Promise<string | undefined> {
+    logger.info(`[users.data.getUserCertificateVersionCodeNameData] About to fetch user "${userId}" certificateVersionCodeName ...`);
+    const usersRepository = getMongoRepository(User);
+    const user = await usersRepository.findOneOrFail(({
+        where: {
+            _id: new mongodb.ObjectID(userId) as any,
+        },
+        select : [ 'certificateVersionCodeName' ]
+    }));
+    logger.info(`[users.data.getUserCertificateVersionCodeNameData] Fetch user "${userId}" certificateVersionCodeName succeed`);
+   
+    return user.certificateVersionCodeName;
+}
+
+export async function setUserPasswordVersionCodeNameData(userId: string, passwordVersionCodeName: string) {
+    logger.info(`[users.data.setUserPasswordVersionCodeNameData] About to set user "${userId}" passwordVersionCodeName ...`);
+    const usersRepository = getMongoRepository(User);
+    await usersRepository.update({ id: new mongodb.ObjectID(userId) as any }, { passwordVersionCodeName });
+
+    logger.info(`[users.data.setUserPasswordVersionCodeNameData] Set user "${userId}" passwordVersionCodeName succeed`);
+}
+
+export async function setUserCertificateVersionCodeNameData(userId: string, certificateVersionCodeName: string) {
+    logger.info(`[users.data.setUserCertificateVersionCodeNameData] About to set user "${userId}" certificateVersionCodeName ...`);
+    const usersRepository = getMongoRepository(User);
+    await usersRepository.update({ id: new mongodb.ObjectID(userId) as any }, { certificateVersionCodeName });
+
+    logger.info(`[users.data.setUserCertificateVersionCodeNameData] Set user "${userId}" certificateVersionCodeName succeed`);
+}
+
 export async function getUsersData(): Promise<User[]> {
     logger.info(`[users.data.getUsersData] About to fetch all users info ...`);
     const usersRepository = getMongoRepository(User);
-    const users = await usersRepository.find();
+    const users = await usersRepository.find({
+        select : [ 'id', 'displayName', 'email', 'openNotes', 'uniqueOAuthId', 'passwordVersionCodeName', 'certificateVersionCodeName' ]
+    });
     logger.info(`[users.data.getUsersData] Fetch all users info succeed`);
     return users;
 }

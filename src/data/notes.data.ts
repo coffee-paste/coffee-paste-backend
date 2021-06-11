@@ -1,7 +1,7 @@
 import { FindConditions, getMongoRepository, ObjectLiteral } from "typeorm";
-import { FilterOptions, logger, NotesPage, PageRequest, QueryableFields } from "../core";
-import { Note, User } from "../models";
-import { getUserData, removeNoteFromUserOpenNotesData, addNoteToUserOpenNotesData, getOpenNotesLazyData } from "./users.data";
+import { FetchPageOptions, FilterOptions, logger, NotesPage, PageRequest, QueryableFields } from "../core";
+import { Encryption, Note, User } from "../models";
+import { getUserData, removeNoteFromUserOpenNotesData, addNoteToUserOpenNotesData, getOpenNotesLazyData, getUserDecryptLocalKeyData, getUserPasswordVersionCodeNameData, getUserCertificateVersionCodeNameData } from "./users.data";
 import * as mongodb from "mongodb";
 import { collectionOperatorsToMongoOperator, matchOperatorToMongoExpression, relationOperatorToMongoOperator } from "./utilities.data";
 
@@ -59,10 +59,8 @@ export async function getBacklogNotesData(userId: string): Promise<Note[]> {
     return notes;
 }
 
-export async function getBacklogNotesPageData(userId: string, page: PageRequest): Promise<NotesPage> {
+export async function getNotesPageData(userId: string, page: PageRequest, fetch: FetchPageOptions): Promise<NotesPage> {
     logger.info(`[notes.data.getBacklogNotesPageData] About to fetch all backlog page "${JSON.stringify(page)}" notes for user "${userId}" ...`);
-    // In order to fetch only notes that *not* in the user open notes, fetch the user info first
-    const user = await getUserData(userId);
     const notesRepository = getMongoRepository(Note);
 
     // Do not query content if not necessary
@@ -72,11 +70,16 @@ export async function getBacklogNotesPageData(userId: string, page: PageRequest)
     }
 
     // Create the initial filter, with the notes to show to the current available in the user archive/backlog
-    const where: ObjectLiteral | FindConditions<Note> = {
-        userId: user.toObjectId(),
-        _id: {
-            $nin: user.toOpenNoteObjectIDs()
-        },
+    const where: ObjectLiteral | FindConditions<Note> | any = {
+        userId: new mongodb.ObjectID(userId) as any,
+    }
+
+    if (fetch !== 'all') {
+        // In order to fetch only notes that in/not in in the user open notes, fetch the user info first
+        const user = await getUserData(userId);
+        where._id = {
+            [collectionOperatorsToMongoOperator(fetch === 'workspace' ? 'inCollection' : 'notInCollection')]: user.toOpenNoteObjectIDs()
+        };
     }
 
     // Iterate on the notes properties (if exists) with their filter
@@ -110,8 +113,6 @@ export async function getBacklogNotesPageData(userId: string, page: PageRequest)
             where[field][operatorLess] = filter.range.to;
         }
     }
-
-
 
     const [notes, totalCount] = await notesRepository.findAndCount({
         select,
@@ -203,4 +204,40 @@ export async function setNoteNameData(noteId: string, userId: string, name: stri
         name
     });
     logger.info(`[notes.data.setNoteNameData] Update the note "${noteId}" name succeed`);
+}
+
+export async function setNoteEncryptionMethodData(noteId: string, userId: string, contentHTML: string, contentText: string, encryption: Encryption) {
+    logger.info(`[notes.data.setNoteEncryptionMethodData] About to update the note "${noteId}" encryption method ...`);
+
+    let passwordVersionCodeName: string | undefined;
+    let certificateVersionCodeName: string | undefined;
+
+    // While setting to the new encryption method, update the encryption versions too
+    switch (encryption) {
+        case Encryption.Password:
+            passwordVersionCodeName = await getUserPasswordVersionCodeNameData(userId);
+            break;
+        case Encryption.Certificate:
+            certificateVersionCodeName = await getUserCertificateVersionCodeNameData(userId);
+        case Encryption.None:
+        default:
+            passwordVersionCodeName = '';
+            certificateVersionCodeName = '';
+            break;
+    }
+
+    const notesRepository = getMongoRepository(Note);
+
+    await notesRepository.update({
+        id: new mongodb.ObjectID(noteId) as any,
+        userId: new mongodb.ObjectID(userId) as any
+    }, {
+        contentHTML,
+        contentText,
+        encryption,
+        passwordVersionCodeName,
+        certificateVersionCodeName,
+        lastModifiedTime: new Date().getTime(),
+    });
+    logger.info(`[notes.data.setNoteEncryptionMethodData] Update the note "${noteId}" encryption method succeed`);
 }

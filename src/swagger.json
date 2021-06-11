@@ -64,6 +64,18 @@
 						},
 						"type": "array",
 						"description": "The open notes (user workspace) collection"
+					},
+					"decryptLocalKey": {
+						"type": "string",
+						"description": "The local decrypt key.\r\nThis is *NOT* a user password, it's only used to decrypt the user key stored in the local storage.\r\nThe decrypted key will never ever will be sent to the server."
+					},
+					"passwordVersionCodeName": {
+						"type": "string",
+						"description": "An numen readable code for password version, used to detect the encryption version of each note in case of key change"
+					},
+					"certificateVersionCodeName": {
+						"type": "string",
+						"description": "An numen readable code for certificate version, used to detect the encryption version of each note in case of certificate change"
 					}
 				},
 				"required": [
@@ -79,6 +91,14 @@
 				"enum": [
 					"WORKSPACE",
 					"BACKLOG"
+				],
+				"type": "string"
+			},
+			"Encryption": {
+				"enum": [
+					"NONE",
+					"PASSWORD",
+					"CERTIFICATE"
 				],
 				"type": "string"
 			},
@@ -113,6 +133,18 @@
 					"contentHTML": {
 						"type": "string",
 						"description": "The note content as HTML"
+					},
+					"encryption": {
+						"$ref": "#/components/schemas/Encryption",
+						"description": "The note encryption method (as default none)"
+					},
+					"passwordVersionCodeName": {
+						"type": "string",
+						"description": "The note password encryption version"
+					},
+					"certificateVersionCodeName": {
+						"type": "string",
+						"description": "The note password encryption version"
 					}
 				},
 				"required": [
@@ -121,7 +153,8 @@
 					"creationTime",
 					"lastModifiedTime",
 					"contentText",
-					"contentHTML"
+					"contentHTML",
+					"encryption"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -325,6 +358,14 @@
 				],
 				"type": "object",
 				"additionalProperties": false
+			},
+			"FetchPageOptions": {
+				"type": "string",
+				"enum": [
+					"all",
+					"backlog",
+					"workspace"
+				]
 			}
 		},
 		"securitySchemes": {
@@ -415,6 +456,121 @@
 						}
 					}
 				},
+				"tags": [
+					"Users"
+				],
+				"security": [
+					{
+						"jwt": [
+							"user"
+						]
+					}
+				],
+				"parameters": []
+			}
+		},
+		"/users/decrypt-local-key": {
+			"get": {
+				"operationId": "GetDecryptLocalKey",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Users"
+				],
+				"security": [
+					{
+						"jwt": [
+							"user"
+						]
+					}
+				],
+				"parameters": []
+			}
+		},
+		"/users/decrypt-local-key/regenerate": {
+			"post": {
+				"operationId": "RegenerateDecryptLocalKey",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				},
+				"description": "Regenerate key for the local key storage (This is NOT a password for anything else!)",
+				"tags": [
+					"Users"
+				],
+				"security": [
+					{
+						"jwt": [
+							"user"
+						]
+					}
+				],
+				"parameters": []
+			}
+		},
+		"/users/increase-password-version-codename": {
+			"post": {
+				"operationId": "IncreaseUserPasswordVersionCodeName",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				},
+				"description": "Increase the password-version-codename.\r\nCall it when you decided to change your local password, and you want to mark all note that encrypted with the old password that their encryption is by the old version of the password",
+				"tags": [
+					"Users"
+				],
+				"security": [
+					{
+						"jwt": [
+							"user"
+						]
+					}
+				],
+				"parameters": []
+			}
+		},
+		"/users/increase-certificate-version-codename": {
+			"post": {
+				"operationId": "IncreaseUseCertificateVersionCodeName",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				},
+				"description": "Increase the certificate-version-codename.\r\nCall it when you decided to change your local certificate, and you want to mark all note that encrypted with the old certificate that their encryption is by the old version of the certificate",
 				"tags": [
 					"Users"
 				],
@@ -599,7 +755,7 @@
 		},
 		"/notes/status/{noteId}": {
 			"put": {
-				"operationId": "SetNotes",
+				"operationId": "SetNoteStatus",
 				"responses": {
 					"204": {
 						"description": "No content"
@@ -657,7 +813,7 @@
 		},
 		"/notes/content/{noteId}": {
 			"put": {
-				"operationId": "SetNotesContent",
+				"operationId": "SetNoteContent",
 				"responses": {
 					"204": {
 						"description": "No content"
@@ -719,7 +875,7 @@
 		},
 		"/notes/name/{noteId}": {
 			"put": {
-				"operationId": "SetNotesName",
+				"operationId": "SetNoteName",
 				"responses": {
 					"204": {
 						"description": "No content"
@@ -767,6 +923,71 @@
 								},
 								"required": [
 									"name"
+								],
+								"type": "object"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/notes/encryption/{noteId}": {
+			"put": {
+				"operationId": "SetNoteEncryptionMethod",
+				"responses": {
+					"204": {
+						"description": "No content"
+					}
+				},
+				"description": "Set note encryption method (including the new encrypted content, to override current content)",
+				"tags": [
+					"Notes"
+				],
+				"security": [
+					{
+						"jwt": [
+							"user"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "noteId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "header",
+						"name": "channelSid",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"encryption": {
+										"$ref": "#/components/schemas/Encryption"
+									},
+									"contentText": {
+										"type": "string"
+									},
+									"contentHTML": {
+										"type": "string"
+									}
+								},
+								"required": [
+									"encryption",
+									"contentText",
+									"contentHTML"
 								],
 								"type": "object"
 							}
@@ -941,9 +1162,9 @@
 				"parameters": []
 			}
 		},
-		"/notes/backlog/page": {
+		"/notes/page": {
 			"post": {
-				"operationId": "GetBacklogNotesPage",
+				"operationId": "GetNotesPage",
 				"responses": {
 					"200": {
 						"description": "Ok",
@@ -966,7 +1187,16 @@
 						]
 					}
 				],
-				"parameters": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "fetch",
+						"required": false,
+						"schema": {
+							"$ref": "#/components/schemas/FetchPageOptions"
+						}
+					}
+				],
 				"requestBody": {
 					"required": true,
 					"content": {
