@@ -142,11 +142,11 @@ export class NotesController extends Controller {
   // It's a post request only because of TSOA limitation for body in get requests
   @Security(AuthMethod.JWT, [AuthScope.USER])
   @Post("/page")
-  public async getNotesPage(@Request() request: ExRequest, @Body() page: PageRequest, @Query() fetch?: FetchPageOptions): Promise<NotesPage> {
-    if (!fetch) {
-      fetch = 'all';
+  public async getNotesPage(@Request() request: ExRequest, @Body() page: PageRequest, @Query() fetchPageNotes?: FetchPageOptions): Promise<NotesPage> {
+    if (!fetchPageNotes) {
+      fetchPageNotes = 'all';
     }
-    return await notesService.getNotesPage(request.user.userId, page, fetch);
+    return await notesService.getNotesPage(request.user.userId, page, fetchPageNotes);
   }
 
   @Security(AuthMethod.JWT, [AuthScope.USER])
