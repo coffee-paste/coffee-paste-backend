@@ -59,7 +59,7 @@ export async function getBacklogNotesData(userId: string): Promise<Note[]> {
     return notes;
 }
 
-export async function getNotesPageData(userId: string, page: PageRequest, fetch: FetchPageOptions): Promise<NotesPage> {
+export async function getNotesPageData(userId: string, page: PageRequest, fetchPageNotes: FetchPageOptions): Promise<NotesPage> {
     logger.info(`[notes.data.getBacklogNotesPageData] About to fetch all backlog page "${JSON.stringify(page)}" notes for user "${userId}" ...`);
     const notesRepository = getMongoRepository(Note);
 
@@ -74,11 +74,11 @@ export async function getNotesPageData(userId: string, page: PageRequest, fetch:
         userId: new mongodb.ObjectID(userId) as any,
     }
 
-    if (fetch !== 'all') {
+    if (fetchPageNotes !== 'all') {
         // In order to fetch only notes that in/not in in the user open notes, fetch the user info first
         const user = await getUserData(userId);
         where._id = {
-            [collectionOperatorsToMongoOperator(fetch === 'workspace' ? 'inCollection' : 'notInCollection')]: user.toOpenNoteObjectIDs()
+            [collectionOperatorsToMongoOperator(fetchPageNotes === 'workspace' ? 'inCollection' : 'notInCollection')]: user.toOpenNoteObjectIDs()
         };
     }
 

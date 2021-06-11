@@ -39,9 +39,9 @@ class NotesService {
     return notes;
   }
 
-  public async getNotesPage(userId: string, page: PageRequest, fetch: FetchPageOptions): Promise<NotesPage> {
+  public async getNotesPage(userId: string, page: PageRequest, fetchPageNotes: FetchPageOptions): Promise<NotesPage> {
     logger.info(`[NotesService.getBacklogNotesPage] About to get all user "${userId}" backlog notes ...`);
-    const notes = await getNotesPageData(userId, page, fetch);
+    const notes = await getNotesPageData(userId, page, fetchPageNotes);
     logger.info(`[NotesService.getBacklogNotesPage] Getting all user "${userId}" backlog notes succeed`);
     return notes;
   }
