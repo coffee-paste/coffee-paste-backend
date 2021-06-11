@@ -42,6 +42,26 @@ export class User {
     @Column()
     openNotes: string[];
 
+    /**
+     * The local decrypt key.
+     * This is *NOT* a user password, it's only used to decrypt the user key stored in the local storage.
+     * The decrypted key will never ever will be sent to the server.
+     */
+    @Column()
+    decryptLocalKey?: string;
+
+    /**
+     * An numen readable code for password version, used to detect the encryption version of each note in case of key change 
+     */
+    @Column()
+    passwordVersionCodeName?: string;
+
+    /**
+     * An numen readable code for certificate version, used to detect the encryption version of each note in case of certificate change 
+     */
+    @Column()
+    certificateVersionCodeName?: string;
+
     constructor(uniqueOAuthId: string, email: string, displayName: string, avatarBase64: string) {
         this.email = email;
         this.displayName = displayName;

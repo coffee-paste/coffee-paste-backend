@@ -33,4 +33,5 @@ export interface OutgoingNoteUpdate extends NoteUpdate {
     event: NoteUpdateEvent;
     name?: string;
     contentHTML?: string;
+    encryption?: string;
 }

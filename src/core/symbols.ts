@@ -104,3 +104,5 @@ export enum AuthScope {
     USER = 'user',
     ADMIN = 'admin',
 }
+
+export type FetchPageOptions = 'all' | 'backlog' | 'workspace';
