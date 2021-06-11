@@ -216,9 +216,12 @@ export async function setNoteEncryptionMethodData(noteId: string, userId: string
     switch (encryption) {
         case Encryption.Password:
             passwordVersionCodeName = await getUserPasswordVersionCodeNameData(userId);
+            certificateVersionCodeName = '';
             break;
         case Encryption.Certificate:
             certificateVersionCodeName = await getUserCertificateVersionCodeNameData(userId);
+            passwordVersionCodeName = '';
+            break;
         case Encryption.None:
         default:
             passwordVersionCodeName = '';
