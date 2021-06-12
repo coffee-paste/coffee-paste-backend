@@ -65,9 +65,9 @@
 						"type": "array",
 						"description": "The open notes (user workspace) collection"
 					},
-					"decryptLocalKey": {
+					"localStorageSalt": {
 						"type": "string",
-						"description": "The local decrypt key.\r\nThis is *NOT* a user password, it's only used to decrypt the user key stored in the local storage.\r\nThe decrypted key will never ever will be sent to the server."
+						"description": "The local storage salt encryption key.\r\nThis is *NOT* a user password, it's only used to help encrypt the user notes key stored in the local storage \r\nso only one that have access to the API will be able to read the local storage.\r\nThe real encryption key will never ever will be sent to the server."
 					},
 					"passwordVersionCodeName": {
 						"type": "string",
@@ -145,6 +145,10 @@
 					"certificateVersionCodeName": {
 						"type": "string",
 						"description": "The note password encryption version code-name"
+					},
+					"randomNoteSalt": {
+						"type": "string",
+						"description": "This (unique read-only) random key used to salt the note encryption (if required)\r\nSo the password/certificate alone will not be en enough to decrypted note content."
 					}
 				},
 				"required": [
@@ -154,7 +158,8 @@
 					"lastModifiedTime",
 					"contentText",
 					"contentHTML",
-					"encryption"
+					"encryption",
+					"randomNoteSalt"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -469,9 +474,9 @@
 				"parameters": []
 			}
 		},
-		"/users/decrypt-local-key": {
+		"/users/local-storage-salt": {
 			"get": {
-				"operationId": "GetDecryptLocalKey",
+				"operationId": "GetUserLocalStorageSalt",
 				"responses": {
 					"200": {
 						"description": "Ok",
@@ -484,6 +489,7 @@
 						}
 					}
 				},
+				"description": "The local storage salt encryption key.\r\nThis is *NOT* a password, it's only used to salt encrypt the user notes key stored in the local storage \r\nso only who that have access to the API will be able to read the local storage.\r\nThe real encryption key will never ever will be sent to the server.",
 				"tags": [
 					"Users"
 				],
@@ -497,9 +503,9 @@
 				"parameters": []
 			}
 		},
-		"/users/decrypt-local-key/regenerate": {
+		"/users/local-storage-salt/regenerate": {
 			"post": {
-				"operationId": "RegenerateDecryptLocalKey",
+				"operationId": "RegenerateUserLocalStorageSalt",
 				"responses": {
 					"200": {
 						"description": "Ok",
@@ -512,7 +518,7 @@
 						}
 					}
 				},
-				"description": "Regenerate key for the local key storage (This is NOT a password for anything else!)",
+				"description": "Regenerate the user local storage salt encryption key, the actual meaning is that the user will have to re-type his password again in the browsers.",
 				"tags": [
 					"Users"
 				],
@@ -526,7 +532,7 @@
 				"parameters": []
 			}
 		},
-		"/users/increase-password-version-codename": {
+		"/users/new-password-version-codename": {
 			"post": {
 				"operationId": "IncreaseUserPasswordVersionCodeName",
 				"responses": {
@@ -555,7 +561,7 @@
 				"parameters": []
 			}
 		},
-		"/users/increase-certificate-version-codename": {
+		"/users/new-certificate-version-codename": {
 			"post": {
 				"operationId": "IncreaseUseCertificateVersionCodeName",
 				"responses": {

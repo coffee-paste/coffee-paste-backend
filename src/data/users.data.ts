@@ -26,26 +26,26 @@ export async function getUserData(userId: string): Promise<User> {
     return user;
 }
 
-export async function getUserDecryptLocalKeyData(userId: string): Promise<string | undefined> {
-    logger.info(`[users.data.getUserDecryptLocalKeyData] About to fetch user "${userId}" decryptLocalKey ...`);
+export async function getUserLocalStorageSaltData(userId: string): Promise<string | undefined> {
+    logger.info(`[users.data.getUserLocalStorageSaltData] About to fetch user "${userId}" localStorageSalt ...`);
     const usersRepository = getMongoRepository(User);
     const user = await usersRepository.findOneOrFail(({
         where: {
             _id: new mongodb.ObjectID(userId) as any,
         },
-        select : [ 'decryptLocalKey' ]
+        select : [ 'localStorageSalt' ]
     }));
-    logger.info(`[users.data.getUserDecryptLocalKeyData] Fetch user "${userId}" decryptLocalKey succeed`);
+    logger.info(`[users.data.getUserLocalStorageSaltData] Fetch user "${userId}" localStorageSalt succeed`);
    
-    return user.decryptLocalKey;
+    return user.localStorageSalt;
 }
 
-export async function setUserDecryptLocalKeyData(userId: string, decryptLocalKey: string) {
-    logger.info(`[users.data.setUserDecryptLocalKeyData] About to set user "${userId}" decryptLocalKey ...`);
+export async function setUserLocalStorageSaltData(userId: string, localStorageSalt: string) {
+    logger.info(`[users.data.setUserLocalStorageSaltData] About to set user "${userId}" localStorageSalt ...`);
     const usersRepository = getMongoRepository(User);
-    await usersRepository.update({ id: new mongodb.ObjectID(userId) as any }, { decryptLocalKey });
+    await usersRepository.update({ id: new mongodb.ObjectID(userId) as any }, { localStorageSalt });
 
-    logger.info(`[users.data.setUserDecryptLocalKeyData] Set user "${userId}" decryptLocalKey succeed`);
+    logger.info(`[users.data.setUserLocalStorageSaltData] Set user "${userId}" localStorageSalt succeed`);
 }
 
 export async function getUserPasswordVersionCodeNameData(userId: string): Promise<string | undefined> {
