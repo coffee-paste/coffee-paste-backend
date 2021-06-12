@@ -1,7 +1,7 @@
 import { FindConditions, getMongoRepository, ObjectLiteral } from "typeorm";
-import { FetchPageOptions, FilterOptions, logger, NotesPage, PageRequest, QueryableFields } from "../core";
+import { FetchPageOptions, FilterOptions, logger, NotesPage, PageRequest, QueryableFields, randomBytesAsync } from "../core";
 import { Encryption, Note, User } from "../models";
-import { getUserData, removeNoteFromUserOpenNotesData, addNoteToUserOpenNotesData, getOpenNotesLazyData, getUserDecryptLocalKeyData, getUserPasswordVersionCodeNameData, getUserCertificateVersionCodeNameData } from "./users.data";
+import { getUserData, removeNoteFromUserOpenNotesData, addNoteToUserOpenNotesData, getOpenNotesLazyData, getUserLocalStorageSaltData, getUserPasswordVersionCodeNameData, getUserCertificateVersionCodeNameData } from "./users.data";
 import * as mongodb from "mongodb";
 import { collectionOperatorsToMongoOperator, matchOperatorToMongoExpression, relationOperatorToMongoOperator } from "./utilities.data";
 
@@ -130,7 +130,11 @@ export async function getNotesPageData(userId: string, page: PageRequest, fetchP
 
 export async function createNoteData(userId: string, name?: string): Promise<string> {
     logger.info(`[notes.data.createNoteData] About to create a new note for user "${userId}"...`);
-    const note = new Note(userId, name);
+
+    // Generate note unique key for further encryption 
+    const randomNoteSalt = await randomBytesAsync(64);
+
+    const note = new Note(userId, randomNoteSalt, name);
     const notesRepository = getMongoRepository(Note);
     const createdNote = await notesRepository.save(note);
     try {

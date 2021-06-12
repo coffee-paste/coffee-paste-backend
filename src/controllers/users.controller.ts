@@ -27,21 +27,27 @@ export class UsersController extends Controller {
     return await usersService.getUser(request.user.userId);
   }
 
+  /** 
+   * The local storage salt encryption key.
+   * This is *NOT* a password, it's only used to salt encrypt the user notes key stored in the local storage 
+   * so only who that have access to the API will be able to read the local storage.
+   * The real encryption key will never ever will be sent to the server.
+   * @returns The local storage salt encryption key
+   */
   @Security(AuthMethod.JWT, [AuthScope.USER])
-  @Get('/decrypt-local-key')
-  public async getDecryptLocalKey(@Request() request: ExRequest) {
-    return await usersService.getUserDecryptLocalKey(request.user.userId);
+  @Get('/local-storage-salt')
+  public async getUserLocalStorageSalt(@Request() request: ExRequest) {
+    return await usersService.getUserLocalStorageSalt(request.user.userId);
   }
 
   /**
-   * Regenerate key for the local key storage (This is NOT a password for anything else!)
-   * @param request 
-   * @returns 
+   * Regenerate the user local storage salt encryption key, the actual meaning is that the user will have to re-type his password again in the browsers.
+   * @returns The new local storage salt encryption key
    */
   @Security(AuthMethod.JWT, [AuthScope.USER])
-  @Post('/decrypt-local-key/regenerate')
-  public async regenerateDecryptLocalKey(@Request() request: ExRequest): Promise<string> {
-    return await usersService.regenerateUserDecryptLocalKey(request.user.userId);
+  @Post('/local-storage-salt/regenerate')
+  public async regenerateUserLocalStorageSalt(@Request() request: ExRequest): Promise<string> {
+    return await usersService.regenerateUserLocalStorageSalt(request.user.userId);
   }
 
   /**
@@ -50,7 +56,7 @@ export class UsersController extends Controller {
    * @returns The new version alias for the new password (there is no real meaning for it :)
    */
   @Security(AuthMethod.JWT, [AuthScope.USER])
-  @Post('/increase-password-version-codename')
+  @Post('/new-password-version-codename')
   public async increaseUserPasswordVersionCodeName(@Request() request: ExRequest): Promise<string> {
     return await usersService.increaseUserPasswordVersionCodeName(request.user.userId);
   }
@@ -60,11 +66,11 @@ export class UsersController extends Controller {
    * Call it when you decided to change your local certificate, and you want to mark all note that encrypted with the old certificate that their encryption is by the old version of the certificate
    * @returns The new version alias for the new certificate (there is no real meaning for it :)
    */
-   @Security(AuthMethod.JWT, [AuthScope.USER])
-   @Post('/increase-certificate-version-codename')
-   public async increaseUseCertificateVersionCodeName(@Request() request: ExRequest): Promise<string> {
-     return await usersService.increaseUseCertificateVersionCodeName(request.user.userId);
-   }
+  @Security(AuthMethod.JWT, [AuthScope.USER])
+  @Post('/new-certificate-version-codename')
+  public async increaseUseCertificateVersionCodeName(@Request() request: ExRequest): Promise<string> {
+    return await usersService.increaseUseCertificateVersionCodeName(request.user.userId);
+  }
 
   @Security(AuthMethod.JWT, [AuthScope.USER])
   @Delete()

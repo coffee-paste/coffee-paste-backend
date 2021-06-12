@@ -67,11 +67,17 @@ export class Note {
     /**
      * The note password encryption version code-name
      */
-     @Column()
-     certificateVersionCodeName?: string;
-     
+    @Column()
+    certificateVersionCodeName?: string;
 
-    constructor(userId: string, name?: string) {
+    /**
+     * This (unique read-only) random key used to salt the note encryption (if required)
+     * So the password/certificate alone will not be en enough to decrypted note content.
+     */
+    @Column()
+    randomNoteSalt: string;
+
+    constructor(userId: string, randomNoteSalt: string, name?: string) {
         this.userId = userId;
         this.name = name;
         const now = new Date().getTime();
@@ -80,6 +86,7 @@ export class Note {
         this.contentText = '';
         this.contentHTML = '';
         this.encryption = Encryption.None;
+        this.randomNoteSalt = randomNoteSalt;
     }
 
     /**

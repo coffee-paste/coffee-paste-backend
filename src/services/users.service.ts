@@ -1,6 +1,6 @@
 import { Note, User } from "../models";
-import { deleteUserData, getUserData, getUserDecryptLocalKeyData, getUsersData, setUserCertificateVersionCodeNameData, setUserDecryptLocalKeyData, setUserPasswordVersionCodeNameData } from "../data";
-import { logger } from "../core";
+import { deleteUserData, getUserData, getUserLocalStorageSaltData, getUsersData, setUserCertificateVersionCodeNameData, setUserLocalStorageSaltData, setUserPasswordVersionCodeNameData } from "../data";
+import { logger, randomBytesAsync } from "../core";
 import * as uuid from 'uuid';
 import { uniqueNamesGenerator, adjectives, colors, animals } from "unique-names-generator";
 import CryptoJS from "crypto-js";
@@ -32,32 +32,32 @@ class UsersService {
     logger.info(`[UsersService.deleteUser] Getting all users info succeed`);
   }
 
-  public async getUserDecryptLocalKey(userId: string): Promise<string> {
-    logger.info(`[UsersService.getUserDecryptLocalKey] About to get user "${userId}" decryptLocalKey ...`);
-    const cipherDecryptLocalKey = await getUserDecryptLocalKeyData(userId);
+  public async getUserLocalStorageSalt(userId: string): Promise<string> {
+    logger.info(`[UsersService.getUserLocalStorageSalt] About to get user "${userId}" localStorageSalt ...`);
+    const cipherLocalStorageSalt = await getUserLocalStorageSaltData(userId);
 
-    let decryptLocalKey = '';
-    if (!cipherDecryptLocalKey) {
-      decryptLocalKey = await this.regenerateUserDecryptLocalKey(userId);
+    let localStorageSalt = '';
+    if (!cipherLocalStorageSalt) {
+      localStorageSalt = await this.regenerateUserLocalStorageSalt(userId);
     } else {
       // Decrypt the key
-      const bytes = CryptoJS.AES.decrypt(cipherDecryptLocalKey, LOCAL_KEYS_ENCRYPTION_KEY);
-      decryptLocalKey = bytes.toString(CryptoJS.enc.Utf8);;
+      const bytes = CryptoJS.AES.decrypt(cipherLocalStorageSalt, LOCAL_KEYS_ENCRYPTION_KEY);
+      localStorageSalt = bytes.toString(CryptoJS.enc.Utf8);;
     }
 
-    logger.info(`[UsersService.getUserDecryptLocalKey] Getting user "${userId}" decryptLocalKey succeed`);
-    return decryptLocalKey;
+    logger.info(`[UsersService.getUserLocalStorageSalt] Getting user "${userId}" localStorageSalt succeed`);
+    return localStorageSalt;
   }
 
-  public async regenerateUserDecryptLocalKey(userId: string): Promise<string> {
-    logger.info(`[UsersService.regenerateUserDecryptLocalKey] About to regenerate user "${userId}" decryptLocalKey ...`);
-    const decryptLocalKey = uuid.v4();
+  public async regenerateUserLocalStorageSalt(userId: string): Promise<string> {
+    logger.info(`[UsersService.regenerateUserLocalStorageSalt] About to regenerate user "${userId}" localStorageSalt ...`);
+    const localStorageSalt = await randomBytesAsync(64);
 
-    const cipherDecryptLocalKey = CryptoJS.AES.encrypt(decryptLocalKey, LOCAL_KEYS_ENCRYPTION_KEY).toString();
     // encrypt key before keeping it in DB 
-    await setUserDecryptLocalKeyData(userId, cipherDecryptLocalKey);
-    logger.info(`[UsersService.regenerateUserDecryptLocalKey] Regenerate user "${userId}" decryptLocalKey succeed`);
-    return decryptLocalKey;
+    const cipherLocalStorageSalt = CryptoJS.AES.encrypt(localStorageSalt, LOCAL_KEYS_ENCRYPTION_KEY).toString();
+    await setUserLocalStorageSaltData(userId, cipherLocalStorageSalt);
+    logger.info(`[UsersService.regenerateUserLocalStorageSalt] Regenerate user "${userId}" localStorageSalt succeed`);
+    return localStorageSalt;
   }
 
   public async increaseUserPasswordVersionCodeName(userId: string): Promise<string> {
