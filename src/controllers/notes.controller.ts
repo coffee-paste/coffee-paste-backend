@@ -14,8 +14,8 @@ import {
   Request,
   Tags,
 } from "tsoa";
-import { AuthMethod, AuthScope, NotesPage, NoteStatus, PageRequest } from "../core";
-import { Note } from "../models";
+import { AuthMethod, AuthScope, FetchPageOptions, NotesPage, NoteStatus, PageRequest } from "../core";
+import { Encryption, Note } from "../models";
 import { notesService } from "../services";
 import express, { Response as ExResponse, Request as ExRequest } from "express";
 import { generateChannelSession } from "../security";
@@ -49,7 +49,7 @@ export class NotesController extends Controller {
    */
   @Security(AuthMethod.JWT, [AuthScope.USER])
   @Put("/status/{noteId}")
-  public async setNotes(@Request() request: ExRequest, @Path() noteId: string, @Body() setNote: { status: NoteStatus }, @Header() channelSid?: string) {
+  public async setNoteStatus(@Request() request: ExRequest, @Path() noteId: string, @Body() setNote: { status: NoteStatus }, @Header() channelSid?: string) {
     await notesService.setNoteStatus(noteId, setNote.status, request.user.userId);
     publishNoteEvent(request.user.userId, {
       noteId,
@@ -63,7 +63,7 @@ export class NotesController extends Controller {
    */
   @Security(AuthMethod.JWT, [AuthScope.USER])
   @Put("/content/{noteId}")
-  public async setNotesContent(@Request() request: ExRequest, @Path() noteId: string, @Body() content: { contentText: string, contentHTML: string }, @Header() channelSid?: string) {
+  public async setNoteContent(@Request() request: ExRequest, @Path() noteId: string, @Body() content: { contentText: string, contentHTML: string }, @Header() channelSid?: string) {
     await notesService.setNoteContent(noteId, request.user.userId, content.contentText, content.contentHTML);
     publishNoteEvent(request.user.userId, {
       noteId,
@@ -78,12 +78,26 @@ export class NotesController extends Controller {
    */
   @Security(AuthMethod.JWT, [AuthScope.USER])
   @Put("/name/{noteId}")
-  public async setNotesName(@Request() request: ExRequest, @Path() noteId: string, @Body() body: { name: string }, @Header() channelSid?: string) {
+  public async setNoteName(@Request() request: ExRequest, @Path() noteId: string, @Body() body: { name: string }, @Header() channelSid?: string) {
     await notesService.setNoteName(noteId, request.user.userId, body.name);
     publishNoteEvent(request.user.userId, {
       noteId,
       event: NoteUpdateEvent.UPDATE,
       name: body.name,
+    }, channelSid);
+  }
+
+  /**
+   * Set note encryption method (including the new encrypted content, to override current content) 
+   */
+  @Security(AuthMethod.JWT, [AuthScope.USER])
+  @Put("/encryption/{noteId}")
+  public async setNoteEncryptionMethod(@Request() request: ExRequest, @Path() noteId: string, @Body() body: { contentHTML: string, contentText: string, encryption: Encryption }, @Header() channelSid?: string) {
+    await notesService.setNoteEncryptionMethod(noteId, request.user.userId, body.contentHTML, body.contentText, body.encryption);
+    publishNoteEvent(request.user.userId, {
+      noteId,
+      event: NoteUpdateEvent.UPDATE,
+      encryption: body.encryption,
     }, channelSid);
   }
 
@@ -125,16 +139,34 @@ export class NotesController extends Controller {
     return await notesService.getBacklogNotes(request.user.userId);
   }
 
-  // It's post request only because of TSOA limitation for body in get requests
+  // It's a post request only because of TSOA limitation for body in get requests
   @Security(AuthMethod.JWT, [AuthScope.USER])
-  @Post("/backlog/page")
-  public async getBacklogNotesPage(@Request() request: ExRequest, @Body() page: PageRequest): Promise<NotesPage> {
-    return await notesService.getBacklogNotesPage(request.user.userId, page);
+  @Post("/page")
+  public async getNotesPage(@Request() request: ExRequest, @Body() page: PageRequest, @Query() fetchPageNotes?: FetchPageOptions): Promise<NotesPage> {
+    if (!fetchPageNotes) {
+      fetchPageNotes = 'all';
+    }
+    return await notesService.getNotesPage(request.user.userId, page, fetchPageNotes);
   }
 
   @Security(AuthMethod.JWT, [AuthScope.USER])
   @Get("/{noteId}")
   public async getNote(@Request() request: ExRequest, @Path() noteId: string): Promise<Note> {
     return await notesService.getNote(noteId, request.user.userId);
+  }
+
+
+  ////////////// ADMIN API's //////////////////
+
+  @Security(AuthMethod.API_KEY, [AuthScope.ADMIN])
+  @Get("workspace/{userId}")
+  public async getOpenNotesByUser(@Path() userId: string): Promise<Note[]> {
+    return await notesService.getWorkspaceNotes(userId);
+  }
+
+  @Security(AuthMethod.API_KEY, [AuthScope.ADMIN])
+  @Get("backlog/{userId}")
+  public async getBacklogNotesByUser(@Path() userId: string): Promise<Note[]> {
+    return await notesService.getBacklogNotes(userId);
   }
 }

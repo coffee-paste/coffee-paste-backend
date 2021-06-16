@@ -1,6 +1,12 @@
 import { Entity, ObjectID, ObjectIdColumn, Column, BeforeInsert, AfterLoad, BeforeUpdate, AfterInsert, BeforeRemove, AfterUpdate } from "typeorm";
 import * as mongodb from "mongodb";
 
+export enum Encryption {
+    None = "NONE",
+    Password = "PASSWORD",
+    Certificate = "CERTIFICATE"
+}
+
 @Entity('notes')
 export class Note {
 
@@ -46,7 +52,32 @@ export class Note {
     @Column()
     contentHTML: string;
 
-    constructor(userId: string, name?: string) {
+    /**
+     * The note encryption method (as default none)
+     */
+    @Column()
+    encryption: Encryption;
+
+    /**
+     * The note password encryption version code-name
+     */
+    @Column()
+    passwordVersionCodeName?: string;
+
+    /**
+     * The note password encryption version code-name
+     */
+    @Column()
+    certificateVersionCodeName?: string;
+
+    /**
+     * This (unique read-only) random key used to salt the note encryption (if required)
+     * So the password/certificate alone will not be en enough to decrypted note content.
+     */
+    @Column()
+    randomNoteSalt: string;
+
+    constructor(userId: string, randomNoteSalt: string, name?: string) {
         this.userId = userId;
         this.name = name;
         const now = new Date().getTime();
@@ -54,6 +85,8 @@ export class Note {
         this.lastModifiedTime = now;
         this.contentText = '';
         this.contentHTML = '';
+        this.encryption = Encryption.None;
+        this.randomNoteSalt = randomNoteSalt;
     }
 
     /**
@@ -90,7 +123,7 @@ export class Note {
      * Used to convert it before sending it to the DB driver
      * @returns The @see this.id as ObjectID
      */
-     public toObjectId(): mongodb.ObjectID {
+    public toObjectId(): mongodb.ObjectID {
         return new mongodb.ObjectID(this.id);
     }
 }
