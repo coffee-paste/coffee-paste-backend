@@ -65,6 +65,10 @@ export interface FilterOptions {
         from: number;
         to: number;
     },
+    outRange?: {
+        from: number;
+        to: number;
+    },
     relation?: {
         value: number;
         relationOperator: RelationOperators;

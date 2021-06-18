@@ -112,6 +112,17 @@ export async function getNotesPageData(userId: string, page: PageRequest, fetchP
             where[field][operatorGreater] = filter.range.from;
             where[field][operatorLess] = filter.range.to;
         }
+
+        if (filter.outRange) {
+            const operatorLess = relationOperatorToMongoOperator('lessOrEquals');
+            const operatorGreater = relationOperatorToMongoOperator('greaterOrEquals');
+            // Append the property out range filter
+            where[field] = where[field] || {};
+
+            where[field].$not = {};
+            where[field].$not[operatorGreater] = filter.outRange.from;
+            where[field].$not[operatorLess] = filter.outRange.to;
+        }
     }
 
     const [notes, totalCount] = await notesRepository.findAndCount({
