@@ -249,6 +249,23 @@
 						],
 						"type": "object"
 					},
+					"outRange": {
+						"properties": {
+							"to": {
+								"type": "number",
+								"format": "double"
+							},
+							"from": {
+								"type": "number",
+								"format": "double"
+							}
+						},
+						"required": [
+							"to",
+							"from"
+						],
+						"type": "object"
+					},
 					"relation": {
 						"properties": {
 							"relationOperator": {
