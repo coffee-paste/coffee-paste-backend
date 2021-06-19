@@ -5,7 +5,7 @@ import * as uuid from 'uuid';
 
 export const AUTHENTICATION_HEADER = "authentication";
 export const API_KEY_HEADER = "api_key";
-export const JWT_COOKIE_NAME = "jwt_token";
+export const JWT_COOKIE_NAME = "session";
 
 export const JWT_SECRET = process.env.JWT_SECRET || '';
 if (!JWT_SECRET) {
