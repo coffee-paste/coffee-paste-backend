@@ -1,5 +1,5 @@
 import { Encryption, Note, User } from "../models";
-import { createNoteData, getBacklogNotesData, getOpenNotesData, removeNoteFromUserOpenNotesData, addNoteToUserOpenNotesData, deleteNoteData, setNoteContentData, setOpenNoteContentData, setNoteNameData, getNotesPageData, getNoteData, setNoteEncryptionMethodData } from "../data";
+import { createNoteData, getBacklogNotesData, getOpenNotesData, removeNoteFromUserOpenNotesData, addNoteToUserOpenNotesData, deleteNoteData, setNoteContentData, setOpenNoteContentData, setNoteNameData, getNotesPageData, getNoteData, setNoteEncryptionMethodData, setNoteTagsData, getUserData, setUserTagsData } from "../data";
 import { FetchPageOptions, logger, notesContentUpdateDebounce, NotesPage, NoteStatus, PageRequest } from "../core";
 
 class NotesService {
@@ -94,6 +94,25 @@ class NotesService {
     logger.info(`[NotesService.setNoteContent] About to set note "${noteId}" a new content...`);
     await setNoteEncryptionMethodData(noteId, userId, contentHTML, contentText, encryption);
     logger.info(`[NotesService.setNoteContent] Setting note "${noteId}" a new content succeed`);
+  }
+
+  public async setNoteTags(noteId: string, userId: string, tags: string[]) {
+    logger.info(`[NotesService.setNoteTags] About to set note "${noteId}" tags ...`);
+
+    // Before setting the tags to the note, make sure to update user's tags collection with all new tags, in any.
+
+    // Get the current collection first, then compare it to the new note tag, to find some new tags.
+    const userTagsCollection = (await getUserData(userId)).tags;
+    const newUserTags = tags.filter((userTag) => !userTagsCollection.includes(userTag));
+    if (newUserTags.length > 0) {
+      logger.info(`[NotesService.setNoteTags] About to add new tags to the user ${userId} collection ...`);
+      userTagsCollection.push(...newUserTags);
+      await setUserTagsData(userId, userTagsCollection);
+      logger.info(`[NotesService.setNoteTags] Adding new tags to the user ${userId} collection succeed`);
+    }
+
+    await setNoteTagsData(noteId, userId, tags);
+    logger.info(`[NotesService.setNoteTags] Setting note "${noteId}" tags succeed`);
   }
 }
 

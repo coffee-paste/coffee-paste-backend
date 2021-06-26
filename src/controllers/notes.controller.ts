@@ -44,6 +44,22 @@ export class NotesController extends Controller {
   }
 
   /**
+   * Set note tags collection.
+   * New tags will be added to the user's tag collection.
+   * NOTE! this tags collection will *override* current tags collection, if exist.
+   * @param channelSid The front session channel, used to skip this channel while updating succeed action via WS 
+   */
+  @Security(AuthMethod.JWT, [AuthScope.USER])
+  @Post("/tags/{noteId}")
+  public async setNoteTags(@Request() request: ExRequest, @Path() noteId: string, @Body() tags: string[], @Header() channelSid?: string) {
+    await notesService.setNoteTags(noteId, request.user.userId, tags);
+    publishNoteEvent(request.user.userId, {
+      noteId,
+      event: NoteUpdateEvent.UPDATE,
+    }, channelSid);
+  }
+
+  /**
    * Move note from/to workspace/archive
    * @param channelSid The front session channel, used to skip this channel while updating succeed action via WS 
    */
