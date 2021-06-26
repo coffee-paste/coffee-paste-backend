@@ -1,7 +1,7 @@
 import { FindConditions, getMongoRepository, ObjectLiteral } from "typeorm";
 import { FetchPageOptions, FilterOptions, logger, NotesPage, PageRequest, QueryableFields, randomBytesAsync } from "../core";
 import { Encryption, Note, User } from "../models";
-import { getUserData, removeNoteFromUserOpenNotesData, addNoteToUserOpenNotesData, getOpenNotesLazyData, getUserLocalStorageSaltData, getUserPasswordVersionCodeNameData, getUserCertificateVersionCodeNameData } from "./users.data";
+import { getUserData, removeNoteFromUserOpenNotesData, addNoteToUserOpenNotesData, getOpenNotesLazyData, getUserLocalStorageSaltData, getUserPasswordVersionCodeNameData, getUserCertificateVersionCodeNameData, setUserTagsData } from "./users.data";
 import * as mongodb from "mongodb";
 import { collectionOperatorsToMongoOperator, matchOperatorToMongoExpression, relationOperatorToMongoOperator } from "./utilities.data";
 
@@ -64,7 +64,7 @@ export async function getNotesPageData(userId: string, page: PageRequest, fetchP
     const notesRepository = getMongoRepository(Note);
 
     // Do not query content if not necessary
-    const select: (keyof Note)[] = ['id', 'name', 'creationTime', 'lastModifiedTime'];
+    const select: (keyof Note)[] = ['id', 'name', 'creationTime', 'lastModifiedTime', 'tags'];
     if (page.filter?.contentText) {
         select.push('contentText');
     }
@@ -258,4 +258,32 @@ export async function setNoteEncryptionMethodData(noteId: string, userId: string
         lastModifiedTime: new Date().getTime(),
     });
     logger.info(`[notes.data.setNoteEncryptionMethodData] Update the note "${noteId}" encryption method succeed`);
+}
+
+export async function setNoteTagsData(noteId: string, userId: string, tags: string[]) {
+    logger.info(`[notes.data.setNoteTagsData] About to update the note "${noteId}" tags ...`);
+
+    const notesRepository = getMongoRepository(Note);
+    await notesRepository.update({
+        id: new mongodb.ObjectID(noteId) as any,
+        userId: new mongodb.ObjectID(userId) as any
+    }, {
+        tags,
+        lastModifiedTime: new Date().getTime(),
+    });
+    logger.info(`[notes.data.setNoteTagsData] Updating the note "${noteId}" tags succeed`);
+}
+
+export async function deleteNotesTagData(userId: string, tag: string) {
+    logger.info(`[notes.data.deleteNotesTagData] About to remove tag "${tag}" from ALL user's "${userId}" notes ...`);
+
+    const notesRepository = getMongoRepository(Note);
+    await notesRepository.updateMany({
+        userId: new mongodb.ObjectID(userId) as any // For all user's notes
+    }, {
+        $pull: { // Pull is a mongodb selector that here is going to walk on all objects and "pull" the from all tags properties the "tag" value.  
+            tags: tag
+        }
+    });
+    logger.info(`[notes.data.setNoteTagsData] update the note "${userId}" tags succeed`);
 }

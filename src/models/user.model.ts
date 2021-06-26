@@ -43,6 +43,12 @@ export class User {
     openNotes: string[];
 
     /**
+     * The user's tags collection
+     */
+    @Column()
+    tags: string[];
+
+    /**
      * The local storage salt encryption key.
      * This is *NOT* a user password, it's only used to help encrypt the user notes key stored in the local storage 
      * so only one that have access to the API will be able to read the local storage.
@@ -68,6 +74,7 @@ export class User {
         this.displayName = displayName;
         this.avatarBase64 = avatarBase64;
         this.uniqueOAuthId = uniqueOAuthId;
+        this.tags = [];
     }
 
     /**
@@ -84,6 +91,7 @@ export class User {
             }
             return (openNote as unknown as mongodb.ObjectID).toHexString();
         }) || [];
+        this.tags = this.tags || [];
     }
 
     /**

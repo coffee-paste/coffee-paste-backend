@@ -65,6 +65,13 @@
 						"type": "array",
 						"description": "The open notes (user workspace) collection"
 					},
+					"tags": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array",
+						"description": "The user's tags collection"
+					},
 					"localStorageSalt": {
 						"type": "string",
 						"description": "The local storage salt encryption key.\r\nThis is *NOT* a user password, it's only used to help encrypt the user notes key stored in the local storage \r\nso only one that have access to the API will be able to read the local storage.\r\nThe real encryption key will never ever will be sent to the server."
@@ -81,7 +88,8 @@
 				"required": [
 					"id",
 					"uniqueOAuthId",
-					"openNotes"
+					"openNotes",
+					"tags"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -149,6 +157,13 @@
 					"randomNoteSalt": {
 						"type": "string",
 						"description": "This (unique read-only) random key used to salt the note encryption (if required)\r\nSo the password/certificate alone will not be en enough to decrypted note content."
+					},
+					"tags": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array",
+						"description": "The note tags"
 					}
 				},
 				"required": [
@@ -159,7 +174,8 @@
 					"contentText",
 					"contentHTML",
 					"encryption",
-					"randomNoteSalt"
+					"randomNoteSalt",
+					"tags"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -657,6 +673,38 @@
 				"parameters": []
 			}
 		},
+		"/users/tag": {
+			"delete": {
+				"operationId": "DeleteUserTag",
+				"responses": {
+					"204": {
+						"description": "No content"
+					}
+				},
+				"description": "Remove tag from user collection (the tag will be removed from all user notes too)",
+				"tags": [
+					"Users"
+				],
+				"security": [
+					{
+						"jwt": [
+							"user"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"description": "The tag to remove",
+						"in": "query",
+						"name": "tag",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
 		"/users/{userId}": {
 			"get": {
 				"operationId": "GetUser",
@@ -770,6 +818,59 @@
 									}
 								},
 								"type": "object"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/notes/tags/{noteId}": {
+			"post": {
+				"operationId": "SetNoteTags",
+				"responses": {
+					"204": {
+						"description": "No content"
+					}
+				},
+				"description": "Set note tags collection.\r\nNew tags will be added to the user's tag collection.\r\nNOTE! this tags collection will *override* current tags collection, if exist.",
+				"tags": [
+					"Notes"
+				],
+				"security": [
+					{
+						"jwt": [
+							"user"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "noteId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "The front session channel, used to skip this channel while updating succeed action via WS",
+						"in": "header",
+						"name": "channelSid",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
 							}
 						}
 					}

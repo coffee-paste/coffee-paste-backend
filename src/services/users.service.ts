@@ -1,5 +1,5 @@
 import { Note, User } from "../models";
-import { deleteUserData, getUserData, getUserLocalStorageSaltData, getUsersData, setUserCertificateVersionCodeNameData, setUserLocalStorageSaltData, setUserPasswordVersionCodeNameData } from "../data";
+import { deleteNotesTagData, deleteUserData, deleteUserTagData, getUserData, getUserLocalStorageSaltData, getUsersData, setUserCertificateVersionCodeNameData, setUserLocalStorageSaltData, setUserPasswordVersionCodeNameData } from "../data";
 import { logger, randomBytesAsync } from "../core";
 import * as uuid from 'uuid';
 import { uniqueNamesGenerator, adjectives, colors, animals } from "unique-names-generator";
@@ -76,6 +76,16 @@ class UsersService {
     await setUserCertificateVersionCodeNameData(userId, certificateVersionCodeName);
     logger.info(`[UsersService.increaseUseCertificateVersionCodeName] Regenerate user "${userId}" certificateVersionCodeName succeed`);
     return certificateVersionCodeName;
+  }
+
+  public async deleteUserTag(userId: string, tag: string): Promise<void> {
+    logger.info(`[UsersService.deleteUserTag] About to delete user "${userId}" tag ${tag} ...`);
+    await deleteUserTagData(userId, tag);
+    logger.info(`[UsersService.deleteUserTag] Delete user "${userId}" tag ${tag} succeed`);
+
+    logger.info(`[UsersService.deleteUserTag] About to delete user "${userId}" tag ${tag} from all user notes ...`);
+    await deleteNotesTagData(userId, tag);
+    logger.info(`[UsersService.deleteUserTag] Delete user "${userId}" tag ${tag} from all user notes succeed`);
   }
 }
 

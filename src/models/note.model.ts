@@ -77,6 +77,12 @@ export class Note {
     @Column()
     randomNoteSalt: string;
 
+    /**
+     * The note tags
+     */
+    @Column()
+    tags: string[];
+
     constructor(userId: string, randomNoteSalt: string, name?: string) {
         this.userId = userId;
         this.name = name;
@@ -87,6 +93,7 @@ export class Note {
         this.contentHTML = '';
         this.encryption = Encryption.None;
         this.randomNoteSalt = randomNoteSalt;
+        this.tags = [];
     }
 
     /**
@@ -116,6 +123,7 @@ export class Note {
     afterLoad() {
         this.id = (this.id as unknown as mongodb.ObjectID).toHexString();
         this.userId = (this.userId as unknown as mongodb.ObjectID)?.toHexString() || this.userId;
+        this.tags = this.tags || [];
     }
 
     /**

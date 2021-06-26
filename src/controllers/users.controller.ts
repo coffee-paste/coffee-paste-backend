@@ -78,6 +78,16 @@ export class UsersController extends Controller {
     return await usersService.deleteUser(request.user.userId);
   }
 
+  /**
+   * Remove tag from user collection (the tag will be removed from all user notes too)
+   * @param tag The tag to remove
+   */
+  @Security(AuthMethod.JWT, [AuthScope.USER])
+  @Delete('/tag')
+  public async deleteUserTag(@Request() request: ExRequest, @Query() tag: string) {
+    return await usersService.deleteUserTag(request.user.userId, tag);
+  }
+
   ////////////// ADMIN API's //////////////////
 
   @Security(AuthMethod.API_KEY, [AuthScope.ADMIN])

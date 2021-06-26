@@ -18,7 +18,7 @@ export async function getUserData(userId: string): Promise<User> {
         where: {
             _id: new mongodb.ObjectID(userId) as any,
         },
-        select : [ 'id', 'displayName', 'email', 'openNotes', 'avatarBase64', 'passwordVersionCodeName', 'certificateVersionCodeName' ]
+        select: ['id', 'displayName', 'email', 'openNotes', 'avatarBase64', 'passwordVersionCodeName', 'certificateVersionCodeName', 'tags']
     }));
     logger.info(`[users.data.getUserData] Fetch user "${userId}" info succeed`);
     // Update user workspace cache 
@@ -33,10 +33,10 @@ export async function getUserLocalStorageSaltData(userId: string): Promise<strin
         where: {
             _id: new mongodb.ObjectID(userId) as any,
         },
-        select : [ 'localStorageSalt' ]
+        select: ['localStorageSalt']
     }));
     logger.info(`[users.data.getUserLocalStorageSaltData] Fetch user "${userId}" localStorageSalt succeed`);
-   
+
     return user.localStorageSalt;
 }
 
@@ -55,10 +55,10 @@ export async function getUserPasswordVersionCodeNameData(userId: string): Promis
         where: {
             _id: new mongodb.ObjectID(userId) as any,
         },
-        select : [ 'passwordVersionCodeName' ]
+        select: ['passwordVersionCodeName']
     }));
     logger.info(`[users.data.getUserPasswordVersionCodeNameData] Fetch user "${userId}" passwordVersionCodeName succeed`);
-   
+
     return user.passwordVersionCodeName;
 }
 
@@ -69,10 +69,10 @@ export async function getUserCertificateVersionCodeNameData(userId: string): Pro
         where: {
             _id: new mongodb.ObjectID(userId) as any,
         },
-        select : [ 'certificateVersionCodeName' ]
+        select: ['certificateVersionCodeName']
     }));
     logger.info(`[users.data.getUserCertificateVersionCodeNameData] Fetch user "${userId}" certificateVersionCodeName succeed`);
-   
+
     return user.certificateVersionCodeName;
 }
 
@@ -96,7 +96,7 @@ export async function getUsersData(): Promise<User[]> {
     logger.info(`[users.data.getUsersData] About to fetch all users info ...`);
     const usersRepository = getMongoRepository(User);
     const users = await usersRepository.find({
-        select : [ 'id', 'displayName', 'email', 'openNotes', 'uniqueOAuthId', 'passwordVersionCodeName', 'certificateVersionCodeName' ]
+        select: ['id', 'displayName', 'email', 'openNotes', 'uniqueOAuthId', 'passwordVersionCodeName', 'certificateVersionCodeName']
     });
     logger.info(`[users.data.getUsersData] Fetch all users info succeed`);
     return users;
@@ -247,4 +247,32 @@ export async function getOpenNotesLazyData(userId: string): Promise<string[]> {
     const openNotes = userOpenNotesCache[userId] = user.openNotes;
     logger.info(`[users.data.getOpenNotesLazyData] Loading "${userId}" current open notes done, and cached`);
     return openNotes;
+}
+
+export async function setUserTagsData(userId: string, tags: string[]): Promise<void> {
+    logger.info(`[users.data.setUserTagsData] About to update the user "${userId}" new tags collection ...`);
+    const usersRepository = getMongoRepository(User);
+    await usersRepository.update({ id: new mongodb.ObjectID(userId) as any }, { tags });
+    logger.info(`[users.data.setUserTagsData] Updating the user "${userId}" tags collection succeed`);
+}
+
+export async function deleteUserTagData(userId: string, tag: string): Promise<void> {
+    logger.info(`[users.data.deleteUserTagData] About to delete tag "${tag}" from the user "${userId}" tags collection ...`);
+
+    // First get the current tags collection, then look for the tag to delete
+    const userTagsCollection = (await getUserData(userId)).tags;
+    const tagToRemoveIndex = userTagsCollection.findIndex(existsTag => existsTag === tag);
+
+    if (tagToRemoveIndex === -1) {
+        logger.warn(`[users.data.deleteUserTagData] The tag "${tag}" not exists in the user "${userId}" tags collection`);
+        return;
+    }
+
+    // Remove the tag from the collection
+    userTagsCollection.splice(tagToRemoveIndex, 1);
+
+    const usersRepository = getMongoRepository(User);
+    // Then update the user with the new collection
+    await usersRepository.update({ id: new mongodb.ObjectID(userId) as any }, { tags: userTagsCollection });
+    logger.info(`[users.data.deleteUserTagData] Deleting tag "${tag}" from the user "${userId}" tags collection succeed`);
 }
