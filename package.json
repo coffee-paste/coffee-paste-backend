@@ -5,6 +5,8 @@
   "main": "server.ts",
   "scripts": {
     "build": "tsoa spec-and-routes && tsc",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx --max-warnings=0",
+    "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --max-warnings=0 --fix",
     "start": "node dist/server.js",
     "dev": "npm run build && npm run start",
     "typeorm": "ts-node ./node_modules/typeorm/cli.js",
@@ -65,6 +67,17 @@
     "@types/swagger-ui-express": "^4.1.2",
     "@types/uuid": "^8.3.0",
     "@types/ws": "^7.4.1",
+    "@typescript-eslint/eslint-plugin": "^4.28.0",
+    "eslint": "^7.2.0",
+    "eslint-config-airbnb": "^18.2.1",
+    "eslint-config-airbnb-typescript": "^12.3.1",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-jsx-a11y": "^6.4.1",
+    "eslint-plugin-prettier": "^3.4.0",
+    "eslint-plugin-react": "^7.21.5",
+    "eslint-plugin-react-hooks": "^1.7.0",
+    "prettier": "^2.3.2",
     "typescript": "^4.2.4"
   }
 }
