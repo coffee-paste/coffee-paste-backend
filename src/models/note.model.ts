@@ -123,6 +123,7 @@ export class Note {
 		this.id = (this.id as unknown as mongodb.ObjectID).toHexString();
 		this.userId = (this.userId as unknown as mongodb.ObjectID)?.toHexString() || this.userId;
 		this.tags = this.tags || [];
+		this.encryption = this.encryption || Encryption.None;
 	}
 
 	/**
