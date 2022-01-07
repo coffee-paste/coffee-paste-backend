@@ -40,12 +40,34 @@ export async function getUserLocalStorageSaltData(userId: string): Promise<strin
 	return user.localStorageSalt;
 }
 
+export async function getUserLocalStorageKeyEncryptionKeyData(userId: string): Promise<string | undefined> {
+	logger.info(`[users.data.getUserLocalStorageKeyEncryptionKeyData] About to fetch user "${userId}" localStorageKek ...`);
+	const usersRepository = getMongoRepository(User);
+	const user = await usersRepository.findOneOrFail({
+		where: {
+			_id: new mongodb.ObjectID(userId) as any,
+		},
+		select: ['localStorageKek'],
+	});
+	logger.info(`[users.data.getUserLocalStorageKeyEncryptionKeyData] Fetch user "${userId}" localStorageKek succeed`);
+
+	return user.localStorageSalt;
+}
+
 export async function setUserLocalStorageSaltData(userId: string, localStorageSalt: string) {
 	logger.info(`[users.data.setUserLocalStorageSaltData] About to set user "${userId}" localStorageSalt ...`);
 	const usersRepository = getMongoRepository(User);
 	await usersRepository.update({ id: new mongodb.ObjectID(userId) as any }, { localStorageSalt });
 
 	logger.info(`[users.data.setUserLocalStorageSaltData] Set user "${userId}" localStorageSalt succeed`);
+}
+
+export async function setUserLocalStorageKekData(userId: string, localStorageKek: string) {
+	logger.info(`[users.data.setUserLocalStorageKekData] About to set user "${userId}" localStorageKek ...`);
+	const usersRepository = getMongoRepository(User);
+	await usersRepository.update({ id: new mongodb.ObjectID(userId) as any }, { localStorageKek });
+
+	logger.info(`[users.data.setUserLocalStorageKekData] Set user "${userId}" localStorageKek succeed`);
 }
 
 export async function getUserPasswordVersionCodeNameData(userId: string): Promise<string | undefined> {

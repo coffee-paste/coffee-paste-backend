@@ -36,6 +36,18 @@ export class UsersController extends Controller {
 		return usersService.regenerateUserLocalStorageSalt(request.user.userId);
 	}
 
+	@Security(AuthMethod.JWT, [AuthScope.USER])
+	@Get('/local-storage-kek')
+	public async getUserLocalStorageKeyEncryptionKey(@Request() request: ExRequest) {
+		return usersService.getUserLocalStorageKeyEncryptionKey(request.user.userId);
+	}
+
+	@Security(AuthMethod.JWT, [AuthScope.USER])
+	@Post('/local-storage-kek/regenerate')
+	public async regenerateUserLocalStorageKeyEncryptionKey(@Request() request: ExRequest) {
+		return usersService.regenerateUserLocalStorageKeyEncryptionKey(request.user.userId);
+	}
+
 	/**
 	 * Increase the password-version-codename.
 	 * Call it when you decided to change your local password, and you want to mark all note that encrypted with the old password that their encryption is by the old version of the password

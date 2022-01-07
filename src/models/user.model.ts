@@ -56,6 +56,9 @@ export class User {
 	@Column()
 	localStorageSalt?: string;
 
+	@Column()
+	localStorageKek?: string;
+
 	/**
 	 * An numen readable code for password version, used to detect the encryption version of each note in case of key change
 	 */

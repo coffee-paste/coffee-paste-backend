@@ -36,64 +36,6 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"User": {
-				"properties": {
-					"id": {
-						"type": "string",
-						"description": "User unique id"
-					},
-					"uniqueOAuthId": {
-						"type": "string",
-						"description": "The user logon provider unique id\r\nTODO: add index"
-					},
-					"email": {
-						"type": "string",
-						"description": "The user unique email (can be )\r\nTODO: add index"
-					},
-					"displayName": {
-						"type": "string",
-						"description": "The user display name"
-					},
-					"avatarBase64": {
-						"type": "string",
-						"description": "The user avatar as Base64 string"
-					},
-					"openNotes": {
-						"items": {
-							"type": "string"
-						},
-						"type": "array",
-						"description": "The open notes (user workspace) collection"
-					},
-					"tags": {
-						"items": {
-							"type": "string"
-						},
-						"type": "array",
-						"description": "The user's tags collection"
-					},
-					"localStorageSalt": {
-						"type": "string",
-						"description": "The local storage salt encryption key.\r\nThis is *NOT* a user password, it's only used to help encrypt the user notes key stored in the local storage \r\nso only one that have access to the API will be able to read the local storage.\r\nThe real encryption key will never ever will be sent to the server."
-					},
-					"passwordVersionCodeName": {
-						"type": "string",
-						"description": "An numen readable code for password version, used to detect the encryption version of each note in case of key change"
-					},
-					"certificateVersionCodeName": {
-						"type": "string",
-						"description": "An numen readable code for certificate version, used to detect the encryption version of each note in case of certificate change"
-					}
-				},
-				"required": [
-					"id",
-					"uniqueOAuthId",
-					"openNotes",
-					"tags"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
 			"NoteStatus": {
 				"description": "Note status",
 				"enum": [
@@ -156,7 +98,7 @@
 					},
 					"randomNoteSalt": {
 						"type": "string",
-						"description": "This (unique read-only) random key used to salt the note encryption (if required)\r\nSo the password/certificate alone will not be en enough to decrypted note content."
+						"description": "This (unique read-only) random key used to salt the note encryption (if required)\nSo the password/certificate alone will not be en enough to decrypted note content."
 					},
 					"tags": {
 						"items": {
@@ -404,6 +346,67 @@
 					"backlog",
 					"workspace"
 				]
+			},
+			"User": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "User unique id"
+					},
+					"uniqueOAuthId": {
+						"type": "string",
+						"description": "The user logon provider unique id\nTODO: add index"
+					},
+					"email": {
+						"type": "string",
+						"description": "The user unique email (can be )\nTODO: add index"
+					},
+					"displayName": {
+						"type": "string",
+						"description": "The user display name"
+					},
+					"avatarBase64": {
+						"type": "string",
+						"description": "The user avatar as Base64 string"
+					},
+					"openNotes": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array",
+						"description": "The open notes (user workspace) collection"
+					},
+					"tags": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array",
+						"description": "The user's tags collection"
+					},
+					"localStorageSalt": {
+						"type": "string",
+						"description": "The local storage salt encryption key.\nThis is *NOT* a user password, it's only used to help encrypt the user notes key stored in the local storage\nso only one that have access to the API will be able to read the local storage.\nThe real encryption key will never ever will be sent to the server."
+					},
+					"localStorageKek": {
+						"type": "string"
+					},
+					"passwordVersionCodeName": {
+						"type": "string",
+						"description": "An numen readable code for password version, used to detect the encryption version of each note in case of key change"
+					},
+					"certificateVersionCodeName": {
+						"type": "string",
+						"description": "An numen readable code for certificate version, used to detect the encryption version of each note in case of certificate change"
+					}
+				},
+				"required": [
+					"id",
+					"uniqueOAuthId",
+					"openNotes",
+					"tags"
+				],
+				"type": "object",
+				"additionalProperties": false
 			}
 		},
 		"securitySchemes": {
@@ -479,297 +482,6 @@
 				"parameters": []
 			}
 		},
-		"/users/profile": {
-			"get": {
-				"operationId": "GetUserProfile",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/User"
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"Users"
-				],
-				"security": [
-					{
-						"jwt": [
-							"user"
-						]
-					}
-				],
-				"parameters": []
-			}
-		},
-		"/users/local-storage-salt": {
-			"get": {
-				"operationId": "GetUserLocalStorageSalt",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "string"
-								}
-							}
-						}
-					}
-				},
-				"description": "The local storage salt encryption key.\r\nThis is *NOT* a password, it's only used to salt encrypt the user notes key stored in the local storage \r\nso only who that have access to the API will be able to read the local storage.\r\nThe real encryption key will never ever will be sent to the server.",
-				"tags": [
-					"Users"
-				],
-				"security": [
-					{
-						"jwt": [
-							"user"
-						]
-					}
-				],
-				"parameters": []
-			}
-		},
-		"/users/local-storage-salt/regenerate": {
-			"post": {
-				"operationId": "RegenerateUserLocalStorageSalt",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "string"
-								}
-							}
-						}
-					}
-				},
-				"description": "Regenerate the user local storage salt encryption key, the actual meaning is that the user will have to re-type his password again in the browsers.",
-				"tags": [
-					"Users"
-				],
-				"security": [
-					{
-						"jwt": [
-							"user"
-						]
-					}
-				],
-				"parameters": []
-			}
-		},
-		"/users/new-password-version-codename": {
-			"post": {
-				"operationId": "IncreaseUserPasswordVersionCodeName",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "string"
-								}
-							}
-						}
-					}
-				},
-				"description": "Increase the password-version-codename.\r\nCall it when you decided to change your local password, and you want to mark all note that encrypted with the old password that their encryption is by the old version of the password",
-				"tags": [
-					"Users"
-				],
-				"security": [
-					{
-						"jwt": [
-							"user"
-						]
-					}
-				],
-				"parameters": []
-			}
-		},
-		"/users/new-certificate-version-codename": {
-			"post": {
-				"operationId": "IncreaseUseCertificateVersionCodeName",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "string"
-								}
-							}
-						}
-					}
-				},
-				"description": "Increase the certificate-version-codename.\r\nCall it when you decided to change your local certificate, and you want to mark all note that encrypted with the old certificate that their encryption is by the old version of the certificate",
-				"tags": [
-					"Users"
-				],
-				"security": [
-					{
-						"jwt": [
-							"user"
-						]
-					}
-				],
-				"parameters": []
-			}
-		},
-		"/users": {
-			"delete": {
-				"operationId": "DeleteUser",
-				"responses": {
-					"204": {
-						"description": "No content"
-					}
-				},
-				"tags": [
-					"Users"
-				],
-				"security": [
-					{
-						"jwt": [
-							"user"
-						]
-					}
-				],
-				"parameters": []
-			},
-			"get": {
-				"operationId": "GetUsers",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"items": {
-										"$ref": "#/components/schemas/User"
-									},
-									"type": "array"
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"Users"
-				],
-				"security": [
-					{
-						"api_key": [
-							"admin"
-						]
-					}
-				],
-				"parameters": []
-			}
-		},
-		"/users/tag": {
-			"delete": {
-				"operationId": "DeleteUserTag",
-				"responses": {
-					"204": {
-						"description": "No content"
-					}
-				},
-				"description": "Remove tag from user collection (the tag will be removed from all user notes too)",
-				"tags": [
-					"Users"
-				],
-				"security": [
-					{
-						"jwt": [
-							"user"
-						]
-					}
-				],
-				"parameters": [
-					{
-						"description": "The tag to remove",
-						"in": "query",
-						"name": "tag",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					}
-				]
-			}
-		},
-		"/users/{userId}": {
-			"get": {
-				"operationId": "GetUser",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/User"
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"Users"
-				],
-				"security": [
-					{
-						"api_key": [
-							"admin"
-						]
-					}
-				],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "userId",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					}
-				]
-			},
-			"delete": {
-				"operationId": "DeleteUserByAdmin",
-				"responses": {
-					"204": {
-						"description": "No content"
-					}
-				},
-				"tags": [
-					"Users"
-				],
-				"security": [
-					{
-						"api_key": [
-							"admin"
-						]
-					}
-				],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "userId",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					}
-				]
-			}
-		},
 		"/notes": {
 			"post": {
 				"operationId": "CreateNote",
@@ -832,7 +544,7 @@
 						"description": "No content"
 					}
 				},
-				"description": "Set note tags collection.\r\nNew tags will be added to the user's tag collection.\r\nNOTE! this tags collection will *override* current tags collection, if exist.",
+				"description": "Set note tags collection.\nNew tags will be added to the user's tag collection.\nNOTE! this tags collection will *override* current tags collection, if exist.",
 				"tags": [
 					"Notes"
 				],
@@ -1241,7 +953,7 @@
 						}
 					}
 				},
-				"description": "Generating channel session in order to allow open web-socket channel.\r\nThe key should append to the WS URL as channelSession param, the channel key is valid for 1 minute only.\r\nNote to keep this session and send it in the REST request channelSid so the current channel will not send update about request sent from this client.",
+				"description": "Generating channel session in order to allow open web-socket channel.\nThe key should append to the WS URL as channelSession param, the channel key is valid for 1 minute only.\nNote to keep this session and send it in the REST request channelSid so the current channel will not send update about request sent from this client.",
 				"tags": [
 					"Notes"
 				],
@@ -1393,6 +1105,353 @@
 				},
 				"tags": [
 					"Notes"
+				],
+				"security": [
+					{
+						"api_key": [
+							"admin"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "userId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/users/profile": {
+			"get": {
+				"operationId": "GetUserProfile",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/User"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Users"
+				],
+				"security": [
+					{
+						"jwt": [
+							"user"
+						]
+					}
+				],
+				"parameters": []
+			}
+		},
+		"/users/local-storage-salt": {
+			"get": {
+				"operationId": "GetUserLocalStorageSalt",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				},
+				"description": "The local storage salt encryption key.\nThis is *NOT* a password, it's only used to salt encrypt the user notes key stored in the local storage\nso only who that have access to the API will be able to read the local storage.\nThe real encryption key will never ever will be sent to the server.",
+				"tags": [
+					"Users"
+				],
+				"security": [
+					{
+						"jwt": [
+							"user"
+						]
+					}
+				],
+				"parameters": []
+			}
+		},
+		"/users/local-storage-salt/regenerate": {
+			"post": {
+				"operationId": "RegenerateUserLocalStorageSalt",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				},
+				"description": "Regenerate the user local storage salt encryption key, the actual meaning is that the user will have to re-type his password again in the browsers.",
+				"tags": [
+					"Users"
+				],
+				"security": [
+					{
+						"jwt": [
+							"user"
+						]
+					}
+				],
+				"parameters": []
+			}
+		},
+		"/users/local-storage-kek": {
+			"get": {
+				"operationId": "GetUserLocalStorageKeyEncryptionKey",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Users"
+				],
+				"security": [
+					{
+						"jwt": [
+							"user"
+						]
+					}
+				],
+				"parameters": []
+			}
+		},
+		"/users/local-storage-kek/regenerate": {
+			"post": {
+				"operationId": "RegenerateUserLocalStorageKeyEncryptionKey",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Users"
+				],
+				"security": [
+					{
+						"jwt": [
+							"user"
+						]
+					}
+				],
+				"parameters": []
+			}
+		},
+		"/users/new-password-version-codename": {
+			"post": {
+				"operationId": "IncreaseUserPasswordVersionCodeName",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				},
+				"description": "Increase the password-version-codename.\nCall it when you decided to change your local password, and you want to mark all note that encrypted with the old password that their encryption is by the old version of the password",
+				"tags": [
+					"Users"
+				],
+				"security": [
+					{
+						"jwt": [
+							"user"
+						]
+					}
+				],
+				"parameters": []
+			}
+		},
+		"/users/new-certificate-version-codename": {
+			"post": {
+				"operationId": "IncreaseUseCertificateVersionCodeName",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				},
+				"description": "Increase the certificate-version-codename.\nCall it when you decided to change your local certificate, and you want to mark all note that encrypted with the old certificate that their encryption is by the old version of the certificate",
+				"tags": [
+					"Users"
+				],
+				"security": [
+					{
+						"jwt": [
+							"user"
+						]
+					}
+				],
+				"parameters": []
+			}
+		},
+		"/users": {
+			"delete": {
+				"operationId": "DeleteUser",
+				"responses": {
+					"204": {
+						"description": "No content"
+					}
+				},
+				"tags": [
+					"Users"
+				],
+				"security": [
+					{
+						"jwt": [
+							"user"
+						]
+					}
+				],
+				"parameters": []
+			},
+			"get": {
+				"operationId": "GetUsers",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/User"
+									},
+									"type": "array"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Users"
+				],
+				"security": [
+					{
+						"api_key": [
+							"admin"
+						]
+					}
+				],
+				"parameters": []
+			}
+		},
+		"/users/tag": {
+			"delete": {
+				"operationId": "DeleteUserTag",
+				"responses": {
+					"204": {
+						"description": "No content"
+					}
+				},
+				"description": "Remove tag from user collection (the tag will be removed from all user notes too)",
+				"tags": [
+					"Users"
+				],
+				"security": [
+					{
+						"jwt": [
+							"user"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"description": "The tag to remove",
+						"in": "query",
+						"name": "tag",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/users/{userId}": {
+			"get": {
+				"operationId": "GetUser",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/User"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Users"
+				],
+				"security": [
+					{
+						"api_key": [
+							"admin"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "userId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			},
+			"delete": {
+				"operationId": "DeleteUserByAdmin",
+				"responses": {
+					"204": {
+						"description": "No content"
+					}
+				},
+				"tags": [
+					"Users"
 				],
 				"security": [
 					{

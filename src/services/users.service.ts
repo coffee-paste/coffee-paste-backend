@@ -6,9 +6,11 @@ import {
 	deleteUserData,
 	deleteUserTagData,
 	getUserData,
+	getUserLocalStorageKeyEncryptionKeyData,
 	getUserLocalStorageSaltData,
 	getUsersData,
 	setUserCertificateVersionCodeNameData,
+	setUserLocalStorageKekData,
 	setUserLocalStorageSaltData,
 	setUserPasswordVersionCodeNameData,
 } from '../data';
@@ -57,6 +59,23 @@ class UsersService {
 		return localStorageSalt;
 	}
 
+	public async getUserLocalStorageKeyEncryptionKey(userId: string): Promise<string> {
+		logger.info(`[UsersService.getUserLocalStorageSalt] About to get user "${userId}" localStorageSalt ...`);
+		const kek = await getUserLocalStorageKeyEncryptionKeyData(userId);
+
+		let localStorageSalt = '';
+		if (!kek) {
+			localStorageSalt = await this.regenerateUserLocalStorageSalt(userId);
+		} else {
+			// Decrypt the key
+			const bytes = CryptoJS.AES.decrypt(kek, LOCAL_KEYS_ENCRYPTION_KEY);
+			localStorageSalt = bytes.toString(CryptoJS.enc.Utf8);
+		}
+
+		logger.info(`[UsersService.getUserLocalStorageSalt] Getting user "${userId}" localStorageSalt succeed`);
+		return localStorageSalt;
+	}
+
 	public async regenerateUserLocalStorageSalt(userId: string): Promise<string> {
 		logger.info(`[UsersService.regenerateUserLocalStorageSalt] About to regenerate user "${userId}" localStorageSalt ...`);
 		const localStorageSalt = await randomBytesAsync(64);
@@ -66,6 +85,17 @@ class UsersService {
 		await setUserLocalStorageSaltData(userId, cipherLocalStorageSalt);
 		logger.info(`[UsersService.regenerateUserLocalStorageSalt] Regenerate user "${userId}" localStorageSalt succeed`);
 		return localStorageSalt;
+	}
+
+	public async regenerateUserLocalStorageKeyEncryptionKey(userId: string): Promise<string> {
+		logger.info(`[UsersService.regenerateUserLocalStorageKeyEncryptionKey] About to regenerate user "${userId}" localStorageSalt ...`);
+		const kek = await randomBytesAsync(256); // TODO: This should be an exported const (like channel spec)
+
+		// encrypt key before keeping it in DB
+		const encryptedKek = CryptoJS.AES.encrypt(kek, LOCAL_KEYS_ENCRYPTION_KEY).toString();
+		await setUserLocalStorageKekData(userId, encryptedKek);
+		logger.info(`[UsersService.regenerateUserLocalStorageKeyEncryptionKey] Regenerate user "${userId}" localStorageKek succeed`);
+		return kek;
 	}
 
 	public async increaseUserPasswordVersionCodeName(userId: string): Promise<string> {
