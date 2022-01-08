@@ -60,20 +60,20 @@ class UsersService {
 	}
 
 	public async getUserLocalStorageKeyEncryptionKey(userId: string): Promise<string> {
-		logger.info(`[UsersService.getUserLocalStorageSalt] About to get user "${userId}" localStorageSalt ...`);
+		logger.info(`[UsersService.getUserLocalStorageKeyEncryptionKey] About to get user "${userId}" localStorageKek ...`);
 		const kek = await getUserLocalStorageKeyEncryptionKeyData(userId);
 
-		let localStorageSalt = '';
+		let localStorageKek = '';
 		if (!kek) {
-			localStorageSalt = await this.regenerateUserLocalStorageSalt(userId);
+			localStorageKek = await this.regenerateUserLocalStorageKeyEncryptionKey(userId);
 		} else {
 			// Decrypt the key
 			const bytes = CryptoJS.AES.decrypt(kek, LOCAL_KEYS_ENCRYPTION_KEY);
-			localStorageSalt = bytes.toString(CryptoJS.enc.Utf8);
+			localStorageKek = bytes.toString(CryptoJS.enc.Utf8);
 		}
 
-		logger.info(`[UsersService.getUserLocalStorageSalt] Getting user "${userId}" localStorageSalt succeed`);
-		return localStorageSalt;
+		logger.info(`[UsersService.getUserLocalStorageKeyEncryptionKey] Getting user "${userId}" localStorageKek succeed`);
+		return localStorageKek;
 	}
 
 	public async regenerateUserLocalStorageSalt(userId: string): Promise<string> {
@@ -88,7 +88,7 @@ class UsersService {
 	}
 
 	public async regenerateUserLocalStorageKeyEncryptionKey(userId: string): Promise<string> {
-		logger.info(`[UsersService.regenerateUserLocalStorageKeyEncryptionKey] About to regenerate user "${userId}" localStorageSalt ...`);
+		logger.info(`[UsersService.regenerateUserLocalStorageKeyEncryptionKey] About to regenerate user "${userId}" localStorageKek ...`);
 		const kek = await randomBytesAsync(256); // TODO: This should be an exported const (like channel spec)
 
 		// encrypt key before keeping it in DB

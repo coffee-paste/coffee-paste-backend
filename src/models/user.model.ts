@@ -56,6 +56,9 @@ export class User {
 	@Column()
 	localStorageSalt?: string;
 
+	/**
+	 * A key that used to read the key that stored on the local storage
+	 */
 	@Column()
 	localStorageKek?: string;
 

@@ -36,15 +36,23 @@ export class UsersController extends Controller {
 		return usersService.regenerateUserLocalStorageSalt(request.user.userId);
 	}
 
+	/**
+	 * Get the key that used to read the key that stored on the local storage
+	 * @returns The key
+	 */
 	@Security(AuthMethod.JWT, [AuthScope.USER])
 	@Get('/local-storage-kek')
-	public async getUserLocalStorageKeyEncryptionKey(@Request() request: ExRequest) {
+	public async getUserLocalStorageKeyEncryptionKey(@Request() request: ExRequest): Promise<string> {
 		return usersService.getUserLocalStorageKeyEncryptionKey(request.user.userId);
 	}
 
+	/**
+	 * Regenerate and get a new key for encrypt and decrypt keys in the local storage
+	 * @returns The new key
+	 */
 	@Security(AuthMethod.JWT, [AuthScope.USER])
 	@Post('/local-storage-kek/regenerate')
-	public async regenerateUserLocalStorageKeyEncryptionKey(@Request() request: ExRequest) {
+	public async regenerateUserLocalStorageKeyEncryptionKey(@Request() request: ExRequest): Promise<string> {
 		return usersService.regenerateUserLocalStorageKeyEncryptionKey(request.user.userId);
 	}
 
