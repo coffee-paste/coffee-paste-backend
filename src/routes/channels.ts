@@ -182,8 +182,12 @@ export function handleChannels(wss: WebSocket.Server) {
 			// Continue handling the new connection
 			await handleIncomingChannel(verifiedWebSocket);
 		} catch (error) {
-			logger.error(`[channels.handleIncomingChannel] validating new channel authentication failed, closing WS`, error);
-			ws.close(403);
+			logger.error(`[channels.handleChannels] Validating new channel authentication failed, closing WS`, error);
+			try {
+				ws.close();
+			} catch (err) {
+				logger.error(`[channels.handleChannels] Failed to close down a websocket - ${err}`);
+			}
 		}
 	});
 }

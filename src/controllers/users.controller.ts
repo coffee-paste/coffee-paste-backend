@@ -37,6 +37,26 @@ export class UsersController extends Controller {
 	}
 
 	/**
+	 * Get the key that used to read the key that stored on the local storage
+	 * @returns The key
+	 */
+	@Security(AuthMethod.JWT, [AuthScope.USER])
+	@Get('/local-storage-kek')
+	public async getUserLocalStorageKeyEncryptionKey(@Request() request: ExRequest): Promise<string> {
+		return usersService.getUserLocalStorageKeyEncryptionKey(request.user.userId);
+	}
+
+	/**
+	 * Regenerate and get a new key for encrypt and decrypt keys in the local storage
+	 * @returns The new key
+	 */
+	@Security(AuthMethod.JWT, [AuthScope.USER])
+	@Post('/local-storage-kek/regenerate')
+	public async regenerateUserLocalStorageKeyEncryptionKey(@Request() request: ExRequest): Promise<string> {
+		return usersService.regenerateUserLocalStorageKeyEncryptionKey(request.user.userId);
+	}
+
+	/**
 	 * Increase the password-version-codename.
 	 * Call it when you decided to change your local password, and you want to mark all note that encrypted with the old password that their encryption is by the old version of the password
 	 * @returns The new version alias for the new password (there is no real meaning for it :)
