@@ -3,6 +3,7 @@ import fetch from 'node-fetch';
 import { createOrSetUserData } from '../data';
 import { logger, OAuth2Service, OAuth2Session } from '../core';
 import { JWT_SECRET } from '../security/authentication';
+import { usersService } from './users.service';
 
 export const GITHUB_SECRET = process.env.GITHUB_SECRET || '';
 if (!GITHUB_SECRET) {
@@ -230,7 +231,17 @@ class AuthService {
 
 			logger.info(`[AuthService.authByOAuth] About to set user in system for code "${oauth2Session.code}" uniqueOAuthId "${userInfo.uniqueOAuthId}"  ...`);
 
-			const userId = await createOrSetUserData(userInfo.uniqueOAuthId, userInfo.email, userInfo.displayName, avatarBase64);
+			const existsUser = await createOrSetUserData(userInfo.uniqueOAuthId, userInfo.email, userInfo.displayName, avatarBase64);
+
+			const userId = existsUser.id;
+
+			// Init encryption methods code names, if not set yet
+			if (!existsUser.passwordVersionCodeName) {
+				await usersService.increaseUserPasswordVersionCodeName(userId);
+			}
+			if (!existsUser.certificateVersionCodeName) {
+				await usersService.increaseUseCertificateVersionCodeName(userId);
+			}
 
 			const jwtToken = jwt.sign(
 				{

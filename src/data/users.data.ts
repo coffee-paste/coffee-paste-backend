@@ -179,7 +179,7 @@ export async function removeNoteFromUserOpenNotesData(userId: string, noteId: st
 	logger.info(`[users.data.removeNoteFromUserOpenNotesData] Remove note "${noteId}" from the open note of user "${userId}" succeed`);
 }
 
-export async function createOrSetUserData(uniqueOAuthId: string, email: string, displayName: string, avatarBase64: string): Promise<string> {
+export async function createOrSetUserData(uniqueOAuthId: string, email: string, displayName: string, avatarBase64: string): Promise<User> {
 	logger.info(`[users.data.createOrSetUser] About to set "${uniqueOAuthId}" user ...`);
 	const usersRepository = getMongoRepository(User);
 
@@ -217,7 +217,7 @@ export async function createOrSetUserData(uniqueOAuthId: string, email: string, 
 		logger.info(`[users.data.createOrSetUser] User  "${existsUser.id}" "${uniqueOAuthId}" exists`);
 		// Update user workspace cache
 		userOpenNotesCache[existsUser.id] = existsUser.openNotes;
-		return existsUser.id;
+		return existsUser;
 	}
 
 	logger.info(`[users.data.createOrSetUser] About to create a new user for "${uniqueOAuthId}" ...`);
@@ -227,7 +227,7 @@ export async function createOrSetUserData(uniqueOAuthId: string, email: string, 
 	// Set user workspace cache
 	userOpenNotesCache[newUser.id] = [];
 	logger.info(`[users.data.createOrSetUser] Create user "${newUser.id}" for "${uniqueOAuthId}" successfully`);
-	return newUser.id;
+	return newUser;
 }
 
 /**
