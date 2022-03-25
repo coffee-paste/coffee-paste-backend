@@ -1,6 +1,6 @@
 import { FindConditions, getMongoRepository, ObjectLiteral } from 'typeorm';
 import * as mongodb from 'mongodb';
-import { FetchPageOptions, FilterOptions, logger, NotesPage, PageRequest, QueryableFields, randomBytesAsync } from '../core';
+import { FetchPageOptions, FilterOptions, logger, NotesPage, PageRequest, QueryableFields, randomBytesBase64Async } from '../core';
 import { Encryption, Note } from '../models';
 import {
 	getUserData,
@@ -149,7 +149,7 @@ export async function createNoteData(userId: string, name?: string): Promise<str
 	logger.info(`[notes.data.createNoteData] About to create a new note for user "${userId}"...`);
 
 	// Generate note unique key for further encryption
-	const randomNoteSalt = await randomBytesAsync(64);
+	const randomNoteSalt = await randomBytesBase64Async(64);
 
 	const note = new Note(userId, randomNoteSalt, name);
 	const notesRepository = getMongoRepository(Note);

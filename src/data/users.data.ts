@@ -51,7 +51,7 @@ export async function getUserLocalStorageKeyEncryptionKeyData(userId: string): P
 	});
 	logger.info(`[users.data.getUserLocalStorageKeyEncryptionKeyData] Fetch user "${userId}" localStorageKek succeed`);
 
-	return user.localStorageSalt;
+	return user.localStorageKek;
 }
 
 export async function setUserLocalStorageSaltData(userId: string, localStorageSalt: string) {

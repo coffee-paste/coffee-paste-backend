@@ -98,7 +98,7 @@
 					},
 					"randomNoteSalt": {
 						"type": "string",
-						"description": "This (unique read-only) random key used to salt the note encryption (if required)\r\nSo the password/certificate alone will not be en enough to decrypted note content."
+						"description": "This (unique read-only) random key used to salt the note encryption (if required)\nSo the password/certificate alone will not be en enough to decrypted note content."
 					},
 					"tags": {
 						"items": {
@@ -355,11 +355,11 @@
 					},
 					"uniqueOAuthId": {
 						"type": "string",
-						"description": "The user logon provider unique id\r\nTODO: add index"
+						"description": "The user logon provider unique id\nTODO: add index"
 					},
 					"email": {
 						"type": "string",
-						"description": "The user unique email (can be )\r\nTODO: add index"
+						"description": "The user unique email (can be )\nTODO: add index"
 					},
 					"displayName": {
 						"type": "string",
@@ -385,7 +385,7 @@
 					},
 					"localStorageSalt": {
 						"type": "string",
-						"description": "The local storage salt encryption key.\r\nThis is *NOT* a user password, it's only used to help encrypt the user notes key stored in the local storage\r\nso only one that have access to the API will be able to read the local storage.\r\nThe real encryption key will never ever will be sent to the server."
+						"description": "The local storage salt encryption key.\nThis is *NOT* a user password, it's only used to help encrypt the user notes key stored in the local storage\nso only one that have access to the API will be able to read the local storage.\nThe real encryption key will never ever will be sent to the server."
 					},
 					"localStorageKek": {
 						"type": "string",
@@ -545,7 +545,7 @@
 						"description": "No content"
 					}
 				},
-				"description": "Set note tags collection.\r\nNew tags will be added to the user's tag collection.\r\nNOTE! this tags collection will *override* current tags collection, if exist.",
+				"description": "Set note tags collection.\nNew tags will be added to the user's tag collection.\nNOTE! this tags collection will *override* current tags collection, if exist.",
 				"tags": [
 					"Notes"
 				],
@@ -954,7 +954,7 @@
 						}
 					}
 				},
-				"description": "Generating channel session in order to allow open web-socket channel.\r\nThe key should append to the WS URL as channelSession param, the channel key is valid for 1 minute only.\r\nNote to keep this session and send it in the REST request channelSid so the current channel will not send update about request sent from this client.",
+				"description": "Generating channel session in order to allow open web-socket channel.\nThe key should append to the WS URL as channelSession param, the channel key is valid for 1 minute only.\nNote to keep this session and send it in the REST request channelSid so the current channel will not send update about request sent from this client.",
 				"tags": [
 					"Notes"
 				],
@@ -1169,7 +1169,7 @@
 						}
 					}
 				},
-				"description": "The local storage salt encryption key.\r\nThis is *NOT* a password, it's only used to salt encrypt the user notes key stored in the local storage\r\nso only who that have access to the API will be able to read the local storage.\r\nThe real encryption key will never ever will be sent to the server.",
+				"description": "The local storage salt encryption key.\nThis is *NOT* a password, it's only used to salt encrypt the user notes key stored in the local storage\nso only who that have access to the API will be able to read the local storage.\nThe real encryption key will never ever will be sent to the server.",
 				"tags": [
 					"Users"
 				],
@@ -1285,7 +1285,7 @@
 						}
 					}
 				},
-				"description": "Increase the password-version-codename.\r\nCall it when you decided to change your local password, and you want to mark all note that encrypted with the old password that their encryption is by the old version of the password",
+				"description": "Increase the password-version-codename.\nCall it when you decided to change your local password, and you want to mark all note that encrypted with the old password that their encryption is by the old version of the password",
 				"tags": [
 					"Users"
 				],
@@ -1314,7 +1314,7 @@
 						}
 					}
 				},
-				"description": "Increase the certificate-version-codename.\r\nCall it when you decided to change your local certificate, and you want to mark all note that encrypted with the old certificate that their encryption is by the old version of the certificate",
+				"description": "Increase the certificate-version-codename.\nCall it when you decided to change your local certificate, and you want to mark all note that encrypted with the old certificate that their encryption is by the old version of the certificate",
 				"tags": [
 					"Users"
 				],

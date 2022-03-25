@@ -14,7 +14,7 @@ import {
 	setUserLocalStorageSaltData,
 	setUserPasswordVersionCodeNameData,
 } from '../data';
-import { logger, randomBytesAsync } from '../core';
+import { logger, randomBytesBase64Async } from '../core';
 
 export const LOCAL_KEYS_ENCRYPTION_KEY = process.env.LOCAL_KEYS_ENCRYPTION_KEY || '';
 if (!LOCAL_KEYS_ENCRYPTION_KEY) {
@@ -78,7 +78,7 @@ class UsersService {
 
 	public async regenerateUserLocalStorageSalt(userId: string): Promise<string> {
 		logger.info(`[UsersService.regenerateUserLocalStorageSalt] About to regenerate user "${userId}" localStorageSalt ...`);
-		const localStorageSalt = await randomBytesAsync(64);
+		const localStorageSalt = await randomBytesBase64Async(32);
 
 		// encrypt key before keeping it in DB
 		const cipherLocalStorageSalt = CryptoJS.AES.encrypt(localStorageSalt, LOCAL_KEYS_ENCRYPTION_KEY).toString();
@@ -89,7 +89,7 @@ class UsersService {
 
 	public async regenerateUserLocalStorageKeyEncryptionKey(userId: string): Promise<string> {
 		logger.info(`[UsersService.regenerateUserLocalStorageKeyEncryptionKey] About to regenerate user "${userId}" localStorageKek ...`);
-		const kek = await randomBytesAsync(256); // TODO: This should be an exported const (like channel spec)
+		const kek = await randomBytesBase64Async(32); // TODO: This should be an exported const (like channel spec)
 
 		// encrypt key before keeping it in DB
 		const encryptedKek = CryptoJS.AES.encrypt(kek, LOCAL_KEYS_ENCRYPTION_KEY).toString();
