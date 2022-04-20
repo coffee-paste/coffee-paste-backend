@@ -136,9 +136,8 @@
 						"$ref": "#/components/schemas/Encryption",
 						"description": "The note encryption method (as default none)"
 					},
-					"guardNonce": {
-						"type": "string",
-						"description": "A note's integrity protection value\nUsed to prevent unauthorized modification to cipher texts."
+					"encryptedGuardNonce": {
+						"type": "string"
 					},
 					"passwordVersionCodeName": {
 						"type": "string",

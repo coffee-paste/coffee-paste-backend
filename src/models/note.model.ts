@@ -66,6 +66,7 @@ export class Note {
 	 *
 	 * To mitigate this, when a note is initially encrypted, the FE sends an integrity value (done by FE to save BE compute/entropy)
 	 *
+	 * @ignore Hide from tsoa- this is an internal field
 	 * @type {string}
 	 * @memberof Note
 	 */
