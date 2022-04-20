@@ -1,11 +1,12 @@
 import { Body, Controller, Get, Path, Post, Put, Query, Route, Header, Delete, Security, Request, Tags } from 'tsoa';
 import { Request as ExRequest } from 'express';
 import { AuthMethod, AuthScope, FetchPageOptions, NotesPage, NoteStatus, PageRequest } from '../core';
-import { Encryption, Note } from '../models';
+import { Note } from '../models';
 import { notesService } from '../services';
 import { generateChannelSession } from '../security';
 import { publishNoteEvent } from '../routes/channels';
 import { NoteUpdateEvent } from '../core/channel.protocol';
+import { SetNoteContentParams, SetNoteEncryptionParams } from '../data/notes/notes.data.types';
 
 @Tags('Notes')
 @Route('notes')
@@ -75,13 +76,8 @@ export class NotesController extends Controller {
 	 */
 	@Security(AuthMethod.JWT, [AuthScope.USER])
 	@Put('/content/{noteId}')
-	public async setNoteContent(
-		@Request() request: ExRequest,
-		@Path() noteId: string,
-		@Body() content: { contentText: string; contentHTML: string },
-		@Header() channelSid?: string
-	) {
-		await notesService.setNoteContent(noteId, request.user.userId, content.contentText, content.contentHTML);
+	public async setNoteContent(@Request() request: ExRequest, @Path() noteId: string, @Body() content: SetNoteContentParams, @Header() channelSid?: string) {
+		await notesService.setNoteContent(noteId, request.user.userId, content);
 		publishNoteEvent(
 			request.user.userId,
 			{
@@ -120,10 +116,10 @@ export class NotesController extends Controller {
 	public async setNoteEncryptionMethod(
 		@Request() request: ExRequest,
 		@Path() noteId: string,
-		@Body() body: { contentHTML: string; contentText: string; encryption: Encryption },
+		@Body() body: SetNoteEncryptionParams,
 		@Header() channelSid?: string
 	) {
-		await notesService.setNoteEncryptionMethod(noteId, request.user.userId, body.contentHTML, body.contentText, body.encryption);
+		await notesService.setNoteEncryptionMethod(noteId, request.user.userId, body);
 		publishNoteEvent(
 			request.user.userId,
 			{

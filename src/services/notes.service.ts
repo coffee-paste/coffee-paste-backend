@@ -1,4 +1,4 @@
-import { Encryption, Note } from '../models';
+import { Note } from '../models';
 import {
 	createNoteData,
 	getBacklogNotesData,
@@ -17,6 +17,7 @@ import {
 	setUserTagsData,
 } from '../data';
 import { FetchPageOptions, logger, notesContentUpdateDebounce, NotesPage, NoteStatus, PageRequest } from '../core';
+import { SetNoteContentParams, SetNoteEncryptionParams } from '../data/notes/notes.data.types';
 
 class NotesService {
 	private loadDebounceContent(note: Note) {
@@ -91,15 +92,15 @@ class NotesService {
 		logger.info(`[NotesService.deleteNotes] Deleting note "${noteId}" of user "${userId}" succeed`);
 	}
 
-	public async setOpenNoteContent(noteId: string, userId: string, contentText: string, contentHTML: string) {
+	public async setOpenNoteContent(noteId: string, userId: string, params: SetNoteContentParams) {
 		logger.info(`[NotesService.setOpenNoteContent] About to set note "${noteId}" a new content...`);
-		await setOpenNoteContentData(noteId, userId, contentText, contentHTML);
+		await setOpenNoteContentData(noteId, userId, params);
 		logger.info(`[NotesService.setOpenNoteContent] Setting note "${noteId}" a new content succeed`);
 	}
 
-	public async setNoteContent(noteId: string, userId: string, contentText: string, contentHTML: string) {
+	public async setNoteContent(noteId: string, userId: string, params: SetNoteContentParams) {
 		logger.info(`[NotesService.setNoteContent] About to set note "${noteId}" a new content...`);
-		await setNoteContentData(noteId, userId, contentText, contentHTML);
+		await setNoteContentData(noteId, userId, params);
 		logger.info(`[NotesService.setNoteContent] Setting note "${noteId}" a new content succeed`);
 	}
 
@@ -109,9 +110,9 @@ class NotesService {
 		logger.info(`[NotesService.setNoteContent] Setting note "${noteId}" a new content succeed`);
 	}
 
-	public async setNoteEncryptionMethod(noteId: string, userId: string, contentHTML: string, contentText: string, encryption: Encryption) {
+	public async setNoteEncryptionMethod(noteId: string, userId: string, params: SetNoteEncryptionParams) {
 		logger.info(`[NotesService.setNoteContent] About to set note "${noteId}" a new content...`);
-		await setNoteEncryptionMethodData(noteId, userId, contentHTML, contentText, encryption);
+		await setNoteEncryptionMethodData(noteId, userId, params);
 		logger.info(`[NotesService.setNoteContent] Setting note "${noteId}" a new content succeed`);
 	}
 

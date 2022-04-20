@@ -58,6 +58,21 @@ export class Note {
 	encryption: Encryption;
 
 	/**
+	 * A note's integrity protection value
+	 * Used to prevent unauthorized modification to cipher texts.
+	 *
+	 * @description An attacker who gains access to the system but not the user's encryption passwords
+	 * could corrupt encrypted notes by sending invalid data.
+	 *
+	 * To mitigate this, when a note is initially encrypted, the FE sends an integrity value (done by FE to save BE compute/entropy)
+	 *
+	 * @type {string}
+	 * @memberof Note
+	 */
+	@Column()
+	guardNonce?: string;
+
+	/**
 	 * The note password encryption version code-name
 	 */
 	@Column()
@@ -135,3 +150,23 @@ export class Note {
 		return new mongodb.ObjectID(this.id);
 	}
 }
+
+/**
+ * Select all 'public' metadata fields from 'Note'
+ */
+export const SelectMetaFromNote: (keyof Note)[] = [
+	'id',
+	'name',
+	'creationTime',
+	'lastModifiedTime',
+	'encryption',
+	'passwordVersionCodeName',
+	'certificateVersionCodeName',
+	'randomNoteSalt',
+	'tags',
+];
+
+/**
+ * Select all 'public' fields from 'Note'
+ */
+export const SelectStandardFromNote: (keyof Note)[] = [...SelectMetaFromNote, 'contentText', 'contentHTML'];

@@ -5,9 +5,10 @@ import debounce from 'lodash.debounce';
 import { notesService } from '../services';
 import { logger, notesContentUpdateDebounce, NotesUpdateDebounceInfo, VerifiedWebSocket } from '../core';
 import { incomingNoteUpdateSchema, schemaValidator, verifyChannelSession } from '../security';
-import { IncomingNoteUpdate, NoteUpdateEvent, OutgoingNoteUpdate } from '../core/channel.protocol';
+import { FrontToBackNoteUpdate, NoteUpdateEvent, BackToFrontNoteUpdate } from '../core/channel.protocol';
+import { SetNoteContentParams } from '../data/notes/notes.data.types';
 
-export type NoteEvent = Omit<OutgoingNoteUpdate, 'sid'>;
+export type NoteEvent = Omit<BackToFrontNoteUpdate, 'sid'>;
 
 /** Time to await for DB update till last note update  */
 const DEBOUNCE_NOTES_CHANGES_UPDATE = Duration.FromSeconds(200);
@@ -36,7 +37,7 @@ async function removeChannel(verifiedWebSocket: VerifiedWebSocket) {
 	logger.info(`[channels.removeChannel] Remove socket "${verifiedWebSocket.sid}" of user "${verifiedWebSocket.user.userId}" succeed`);
 }
 
-async function broadcastNoteEvent(userId: string, channelId: string, outgoingNoteUpdate: OutgoingNoteUpdate) {
+async function broadcastNoteEvent(userId: string, channelId: string, outgoingNoteUpdate: BackToFrontNoteUpdate) {
 	logger.info(`[channels.broadcastNoteEvent] about to broadcast note "${outgoingNoteUpdate.noteId}" of user "${userId}"...`);
 	// Get all user channels
 	const userChannels = notesChannels[userId];
@@ -64,7 +65,7 @@ async function broadcastNoteEvent(userId: string, channelId: string, outgoingNot
 /**
  * In order to keep DB performance, implement debounce logic to update DB only X time after updating note finished
  */
-async function saveNoteUpdateDebounced(noteId: string, userId: string, contentText: string, contentHTML: string) {
+async function saveNoteUpdateDebounced(noteId: string, userId: string, params: SetNoteContentParams) {
 	logger.info(`[channels.saveNoteUpdateDebounced] About to handle update for ${noteId}`);
 
 	let notesUpdateDebounceInfo = notesContentUpdateDebounce.get(noteId);
@@ -85,12 +86,7 @@ async function saveNoteUpdateDebounced(noteId: string, userId: string, contentTe
 				try {
 					logger.info(`[channels.saveNoteUpdateDebounced] About to flush DB update for ${noteId}`);
 					// Save the last state of the note in the DB
-					await notesService.setOpenNoteContent(
-						noteId,
-						userId,
-						notesLastUpdateDebouncedInfo.lastState.contentText,
-						notesLastUpdateDebouncedInfo.lastState.contentHTML
-					);
+					await notesService.setOpenNoteContent(noteId, userId, params);
 				} catch (error) {
 					logger.error(`[channels.saveNoteUpdateDebounced] invoking setOpenNoteContent for noteId ${noteId} failed `);
 				}
@@ -99,8 +95,9 @@ async function saveNoteUpdateDebounced(noteId: string, userId: string, contentTe
 		notesUpdateDebounceInfo = {
 			debounceFunc,
 			lastState: {
-				contentHTML,
-				contentText,
+				contentHTML: params.contentHTML,
+				contentText: params.contentText,
+				guardNonce: params.newGuardNonce,
 			},
 		} as NotesUpdateDebounceInfo;
 		notesContentUpdateDebounce.set(noteId, notesUpdateDebounceInfo);
@@ -110,8 +107,9 @@ async function saveNoteUpdateDebounced(noteId: string, userId: string, contentTe
 
 	// Keep the current note state
 	notesUpdateDebounceInfo.lastState = {
-		contentHTML,
-		contentText,
+		contentHTML: params.contentHTML,
+		contentText: params.contentText,
+		guardNonce: params.newGuardNonce,
 	};
 
 	// Call to the debounceFunc
@@ -130,18 +128,16 @@ async function handleIncomingChannel(verifiedWebSocket: VerifiedWebSocket) {
 	verifiedWebSocket.on('message', async (msg: string) => {
 		logger.info(`[channels.handleIncomingChannel] New message arrived from channel "${verifiedWebSocket.sid}"`);
 		try {
-			const incomingNoteUpdateRaw: IncomingNoteUpdate = JSON.parse(msg);
+			const incomingNoteUpdateRaw: FrontToBackNoteUpdate = JSON.parse(msg);
 			// Validate user input
-			const incomingNoteUpdate = await schemaValidator<IncomingNoteUpdate>(incomingNoteUpdateRaw, incomingNoteUpdateSchema);
+			const incomingNoteUpdate = await schemaValidator<FrontToBackNoteUpdate>(incomingNoteUpdateRaw, incomingNoteUpdateSchema);
 
-			const { noteId, contentText, contentHTML } = incomingNoteUpdate;
-
-			await saveNoteUpdateDebounced(noteId, userId, contentText, contentHTML);
+			await saveNoteUpdateDebounced(incomingNoteUpdate.noteId, userId, incomingNoteUpdate);
 
 			// After update content succeed, broadcast the new note content
 			await broadcastNoteEvent(userId, verifiedWebSocket.sid, {
-				noteId,
-				contentHTML,
+				noteId: incomingNoteUpdate.noteId,
+				contentHTML: incomingNoteUpdate.contentHTML,
 				event: NoteUpdateEvent.FEED,
 			});
 		} catch (error) {
