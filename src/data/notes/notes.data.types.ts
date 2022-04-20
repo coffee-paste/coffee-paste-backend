@@ -3,6 +3,7 @@ import { Encryption } from '../../models/note.model';
 export interface NoteUpdateRequest {
 	oldGuardNonce?: string;
 	newGuardNonce?: string;
+	encryptedNewGuardNonce?: string;
 }
 
 export interface NoteContentUpdateParams {

@@ -17,6 +17,10 @@ function assertHasNewGuardNonce(param: Partial<NoteUpdateRequest>): void {
 	if (!param?.newGuardNonce) {
 		throw new Error('A new Guard Nonce was not provided');
 	}
+
+	if (!param?.encryptedNewGuardNonce) {
+		throw new Error('An encrypted version of the new Guard Nonce was not provided');
+	}
 }
 
 export async function getNoteData(noteId: string, userId: string): Promise<Note> {
@@ -219,6 +223,7 @@ export async function setOpenNoteContentData(noteId: string, userId: string, par
 			contentHTML: params.contentHTML,
 			contentText: params.contentText,
 			guardNonce: params.newGuardNonce,
+			encryptedGuardNonce: params.encryptedNewGuardNonce,
 			lastModifiedTime: new Date().getTime(),
 		}
 	);
@@ -245,6 +250,7 @@ export async function setNoteContentData(noteId: string, userId: string, params:
 			contentHTML: params.contentHTML,
 			contentText: params.contentText,
 			guardNonce: params.newGuardNonce,
+			encryptedGuardNonce: params.encryptedNewGuardNonce,
 			lastModifiedTime: new Date().getTime(),
 		}
 	);
@@ -278,21 +284,17 @@ export async function setNoteEncryptionMethodData(noteId: string, userId: string
 	let passwordVersionCodeName: string | undefined;
 	let certificateVersionCodeName: string | undefined;
 
-	const { encryption, contentHTML, contentText, oldGuardNonce, newGuardNonce } = params;
+	const { encryption, contentHTML, contentText, oldGuardNonce } = params;
 
 	// While setting to the new encryption method, update the encryption versions too
 	switch (encryption) {
 		case Encryption.Password:
-			if (!newGuardNonce) {
-				throw new Error(`Note encryption was set to '${Encryption.Password}' but a new Guard Nonce was not provided`);
-			}
+			assertHasNewGuardNonce(params);
 			passwordVersionCodeName = await getUserPasswordVersionCodeNameData(userId);
 			certificateVersionCodeName = '';
 			break;
 		case Encryption.Certificate:
-			if (!newGuardNonce) {
-				throw new Error(`Note encryption was set to '${Encryption.Certificate}' but a new Guard Nonce was not provided`);
-			}
+			assertHasNewGuardNonce(params);
 			certificateVersionCodeName = await getUserCertificateVersionCodeNameData(userId);
 			passwordVersionCodeName = '';
 			break;
@@ -318,7 +320,8 @@ export async function setNoteEncryptionMethodData(noteId: string, userId: string
 			contentHTML,
 			contentText,
 			encryption,
-			guardNonce: newGuardNonce,
+			guardNonce: params.newGuardNonce,
+			encryptedGuardNonce: params.encryptedNewGuardNonce,
 			passwordVersionCodeName,
 			certificateVersionCodeName,
 			lastModifiedTime: new Date().getTime(),
