@@ -72,6 +72,9 @@ export class Note {
 	@Column()
 	guardNonce?: string;
 
+	@Column()
+	encryptedGuardNonce?: string;
+
 	/**
 	 * The note password encryption version code-name
 	 */
@@ -164,6 +167,7 @@ export const SelectMetaFromNote: (keyof Note)[] = [
 	'certificateVersionCodeName',
 	'randomNoteSalt',
 	'tags',
+	'encryptedGuardNonce',
 ];
 
 /**
