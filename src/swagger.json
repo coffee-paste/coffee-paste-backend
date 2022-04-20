@@ -52,6 +52,9 @@
 					"newGuardNonce": {
 						"type": "string"
 					},
+					"encryptedNewGuardNonce": {
+						"type": "string"
+					},
 					"contentHTML": {
 						"type": "string"
 					},
@@ -80,6 +83,9 @@
 						"type": "string"
 					},
 					"newGuardNonce": {
+						"type": "string"
+					},
+					"encryptedNewGuardNonce": {
 						"type": "string"
 					},
 					"contentHTML": {
