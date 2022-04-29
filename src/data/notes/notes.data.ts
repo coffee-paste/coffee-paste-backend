@@ -1,4 +1,4 @@
-import { FindConditions, getMongoRepository, ObjectLiteral } from 'typeorm';
+import { FindConditions, getMongoRepository, MongoRepository, ObjectLiteral } from 'typeorm';
 import * as mongodb from 'mongodb';
 import { FetchPageOptions, FilterOptions, logger, NotesPage, PageRequest, QueryableFields, randomBytesBase64Async } from '../../core';
 import { Encryption, Note, SelectMetaFromNote, SelectStandardFromNote } from '../../models';
@@ -205,7 +205,6 @@ export async function deleteNoteData(noteId: string, userId: string, guardNonce?
 
 export async function setOpenNoteContentData(noteId: string, userId: string, params: SetNoteContentParams): Promise<void> {
 	logger.info(`[notes.data.setOpenNoteContentData] About to update the note "${noteId}" content ...`);
-	assertHasNewGuardNonce(params);
 
 	const openNotes = await getOpenNotesLazyData(userId);
 
@@ -237,7 +236,6 @@ export async function setOpenNoteContentData(noteId: string, userId: string, par
 
 export async function setNoteContentData(noteId: string, userId: string, params: SetNoteContentParams): Promise<void> {
 	logger.info(`[notes.data.setNoteContentData] About to update the note "${noteId}" content ...`);
-	assertHasNewGuardNonce(params);
 
 	const notesRepository = getMongoRepository(Note);
 	const { affected } = await notesRepository.update(

@@ -129,6 +129,7 @@ export class Note {
 	@BeforeRemove()
 	beforeUpdate() {
 		this.id = this.toObjectId() as any;
+		this.guardNonce = (this.guardNonce ?? null) as any;
 		this.beforeAction();
 	}
 
@@ -143,6 +144,8 @@ export class Note {
 		this.userId = (this.userId as unknown as mongodb.ObjectID)?.toHexString() || this.userId;
 		this.tags = this.tags || [];
 		this.encryption = this.encryption || Encryption.None;
+		this.guardNonce = this.guardNonce || undefined;
+		this.encryptedGuardNonce = this.encryptedGuardNonce || undefined;
 	}
 
 	/**
