@@ -1,7 +1,7 @@
-import { FindConditions, getMongoRepository, ObjectLiteral } from 'typeorm';
+import { FindConditions, getMongoRepository, MongoRepository, ObjectLiteral } from 'typeorm';
 import * as mongodb from 'mongodb';
-import { FetchPageOptions, FilterOptions, logger, NotesPage, PageRequest, QueryableFields, randomBytesBase64Async } from '../core';
-import { Encryption, Note } from '../models';
+import { FetchPageOptions, FilterOptions, logger, NotesPage, PageRequest, QueryableFields, randomBytesBase64Async } from '../../core';
+import { Encryption, Note, SelectMetaFromNote, SelectStandardFromNote } from '../../models';
 import {
 	getUserData,
 	removeNoteFromUserOpenNotesData,
@@ -9,13 +9,25 @@ import {
 	getOpenNotesLazyData,
 	getUserPasswordVersionCodeNameData,
 	getUserCertificateVersionCodeNameData,
-} from './users.data';
-import { collectionOperatorsToMongoOperator, matchOperatorToMongoExpression, relationOperatorToMongoOperator } from './utilities.data';
+} from '../users.data';
+import { collectionOperatorsToMongoOperator, matchOperatorToMongoExpression, relationOperatorToMongoOperator } from '../utilities.data';
+import { SetNoteEncryptionParams, SetNoteContentParams, NoteUpdateRequest } from './notes.data.types';
+
+function assertHasNewGuardNonce(param: Partial<NoteUpdateRequest>): void {
+	if (!param?.newGuardNonce) {
+		throw new Error('A new Guard Nonce was not provided');
+	}
+
+	if (!param?.encryptedNewGuardNonce) {
+		throw new Error('An encrypted version of the new Guard Nonce was not provided');
+	}
+}
 
 export async function getNoteData(noteId: string, userId: string): Promise<Note> {
 	logger.info(`[notes.data.getNoteData] About to fetch note id "${noteId}"...`);
 	const notesRepository = getMongoRepository(Note);
 	const notes = await notesRepository.findOneOrFail({
+		select: SelectStandardFromNote,
 		where: {
 			_id: new mongodb.ObjectID(noteId) as any,
 			userId: new mongodb.ObjectID(userId) as any,
@@ -31,6 +43,7 @@ export async function getOpenNotesData(userId: string): Promise<Note[]> {
 	const user = await getUserData(userId);
 	const notesRepository = getMongoRepository(Note);
 	const notes = await notesRepository.find({
+		select: SelectStandardFromNote,
 		where: {
 			userId: user.toObjectId(),
 			_id: {
@@ -51,6 +64,7 @@ export async function getBacklogNotesData(userId: string): Promise<Note[]> {
 	const user = await getUserData(userId);
 	const notesRepository = getMongoRepository(Note);
 	const notes = await notesRepository.find({
+		select: SelectStandardFromNote,
 		where: {
 			userId: user.toObjectId(),
 			_id: {
@@ -70,7 +84,7 @@ export async function getNotesPageData(userId: string, page: PageRequest, fetchP
 	const notesRepository = getMongoRepository(Note);
 
 	// Do not query content if not necessary
-	const select: (keyof Note)[] = ['id', 'name', 'creationTime', 'lastModifiedTime', 'tags'];
+	const select: (keyof Note)[] = SelectMetaFromNote;
 	if (page.filter?.contentText) {
 		select.push('contentText');
 	}
@@ -166,10 +180,18 @@ export async function createNoteData(userId: string, name?: string): Promise<str
 	return createdNote.id;
 }
 
-export async function deleteNoteData(noteId: string, userId: string) {
+export async function deleteNoteData(noteId: string, userId: string, guardNonce?: string) {
 	logger.info(`[notes.data.deleteNoteData] About to delete the note "${noteId}" of user "${userId}"...`);
 	const notesRepository = getMongoRepository(Note);
-	await notesRepository.delete(noteId);
+	const { affected } = await notesRepository.delete({
+		guardNonce,
+		id: noteId,
+	});
+
+	if (!affected || affected <= 0) {
+		throw new Error(`Could not delete note ${noteId}. Note may not exist or Guard Nonce may be incorrect`);
+	}
+
 	try {
 		// After removing note, make sure to remove it for the user workspace too
 		await removeNoteFromUserOpenNotesData(userId, noteId);
@@ -181,7 +203,7 @@ export async function deleteNoteData(noteId: string, userId: string) {
 	logger.info(`[notes.data.deleteNoteData] Delete the note "${noteId}" of user "${userId}" succeed`);
 }
 
-export async function setOpenNoteContentData(noteId: string, userId: string, contentText: string, contentHTML: string) {
+export async function setOpenNoteContentData(noteId: string, userId: string, params: SetNoteContentParams): Promise<void> {
 	logger.info(`[notes.data.setOpenNoteContentData] About to update the note "${noteId}" content ...`);
 
 	const openNotes = await getOpenNotesLazyData(userId);
@@ -191,32 +213,50 @@ export async function setOpenNoteContentData(noteId: string, userId: string, con
 	}
 
 	const notesRepository = getMongoRepository(Note);
-	await notesRepository.update(
-		{ id: new mongodb.ObjectID(noteId) as any },
+	const { affected } = await notesRepository.update(
 		{
-			contentHTML,
-			contentText,
+			id: new mongodb.ObjectID(noteId) as any,
+			guardNonce: params.oldGuardNonce,
+		},
+		{
+			contentHTML: params.contentHTML,
+			contentText: params.contentText,
+			guardNonce: params.newGuardNonce,
+			encryptedGuardNonce: params.encryptedNewGuardNonce,
 			lastModifiedTime: new Date().getTime(),
 		}
 	);
+
+	if (!affected || affected <= 0) {
+		throw new Error(`Could not update note ${noteId}. Note may not exist or Guard Nonce may be incorrect`);
+	}
+
 	logger.info(`[notes.data.setOpenNoteContentData] Update the note "${noteId}" content succeed`);
 }
 
-export async function setNoteContentData(noteId: string, userId: string, contentText: string, contentHTML: string) {
+export async function setNoteContentData(noteId: string, userId: string, params: SetNoteContentParams): Promise<void> {
 	logger.info(`[notes.data.setNoteContentData] About to update the note "${noteId}" content ...`);
 
 	const notesRepository = getMongoRepository(Note);
-	await notesRepository.update(
+	const { affected } = await notesRepository.update(
 		{
 			id: new mongodb.ObjectID(noteId) as any,
 			userId: new mongodb.ObjectID(userId) as any,
+			guardNonce: params.oldGuardNonce,
 		},
 		{
-			contentHTML,
-			contentText,
+			contentHTML: params.contentHTML,
+			contentText: params.contentText,
+			guardNonce: params.newGuardNonce,
+			encryptedGuardNonce: params.encryptedNewGuardNonce,
 			lastModifiedTime: new Date().getTime(),
 		}
 	);
+
+	if (!affected || affected <= 0) {
+		throw new Error(`Could not update note ${noteId}. Note may not exist or Guard Nonce may be incorrect`);
+	}
+
 	logger.info(`[notes.data.setNoteContentData] update the note "${noteId}" content succeed`);
 }
 
@@ -236,24 +276,31 @@ export async function setNoteNameData(noteId: string, userId: string, name: stri
 	logger.info(`[notes.data.setNoteNameData] Update the note "${noteId}" name succeed`);
 }
 
-export async function setNoteEncryptionMethodData(noteId: string, userId: string, contentHTML: string, contentText: string, encryption: Encryption) {
+export async function setNoteEncryptionMethodData(noteId: string, userId: string, params: SetNoteEncryptionParams) {
 	logger.info(`[notes.data.setNoteEncryptionMethodData] About to update the note "${noteId}" encryption method ...`);
 
 	let passwordVersionCodeName: string | undefined;
 	let certificateVersionCodeName: string | undefined;
 
+	const { encryption, contentHTML, contentText, oldGuardNonce } = params;
+
 	// While setting to the new encryption method, update the encryption versions too
 	switch (encryption) {
 		case Encryption.Password:
+			assertHasNewGuardNonce(params);
 			passwordVersionCodeName = await getUserPasswordVersionCodeNameData(userId);
 			certificateVersionCodeName = '';
 			break;
 		case Encryption.Certificate:
+			assertHasNewGuardNonce(params);
 			certificateVersionCodeName = await getUserCertificateVersionCodeNameData(userId);
 			passwordVersionCodeName = '';
 			break;
 		case Encryption.None:
 		default:
+			if (!oldGuardNonce) {
+				throw new Error(`Note encryption was set to '${Encryption.None}' but the current Guard Nonce was not provided`);
+			}
 			passwordVersionCodeName = '';
 			certificateVersionCodeName = '';
 			break;
@@ -261,20 +308,28 @@ export async function setNoteEncryptionMethodData(noteId: string, userId: string
 
 	const notesRepository = getMongoRepository(Note);
 
-	await notesRepository.update(
+	const { affected } = await notesRepository.update(
 		{
 			id: new mongodb.ObjectID(noteId) as any,
 			userId: new mongodb.ObjectID(userId) as any,
+			guardNonce: oldGuardNonce,
 		},
 		{
 			contentHTML,
 			contentText,
 			encryption,
+			guardNonce: params.newGuardNonce,
+			encryptedGuardNonce: params.encryptedNewGuardNonce,
 			passwordVersionCodeName,
 			certificateVersionCodeName,
 			lastModifiedTime: new Date().getTime(),
 		}
 	);
+
+	if (!affected || affected <= 0) {
+		throw new Error(`Could not update note ${noteId}. Note may not exist or Guard Nonce may be incorrect`);
+	}
+
 	logger.info(`[notes.data.setNoteEncryptionMethodData] Update the note "${noteId}" encryption method succeed`);
 }
 

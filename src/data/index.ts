@@ -1,2 +1,2 @@
 export * from './users.data';
-export * from './notes.data';
+export * from './notes/notes.data';

@@ -44,6 +44,31 @@
 				],
 				"type": "string"
 			},
+			"SetNoteContentParams": {
+				"properties": {
+					"oldGuardNonce": {
+						"type": "string"
+					},
+					"newGuardNonce": {
+						"type": "string"
+					},
+					"encryptedNewGuardNonce": {
+						"type": "string"
+					},
+					"contentHTML": {
+						"type": "string"
+					},
+					"contentText": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"contentHTML",
+					"contentText"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"Encryption": {
 				"enum": [
 					"NONE",
@@ -51,6 +76,35 @@
 					"CERTIFICATE"
 				],
 				"type": "string"
+			},
+			"SetNoteEncryptionParams": {
+				"properties": {
+					"oldGuardNonce": {
+						"type": "string"
+					},
+					"newGuardNonce": {
+						"type": "string"
+					},
+					"encryptedNewGuardNonce": {
+						"type": "string"
+					},
+					"contentHTML": {
+						"type": "string"
+					},
+					"contentText": {
+						"type": "string"
+					},
+					"encryption": {
+						"$ref": "#/components/schemas/Encryption"
+					}
+				},
+				"required": [
+					"contentHTML",
+					"contentText",
+					"encryption"
+				],
+				"type": "object",
+				"additionalProperties": false
 			},
 			"Note": {
 				"properties": {
@@ -87,6 +141,9 @@
 					"encryption": {
 						"$ref": "#/components/schemas/Encryption",
 						"description": "The note encryption method (as default none)"
+					},
+					"encryptedGuardNonce": {
+						"type": "string"
 					},
 					"passwordVersionCodeName": {
 						"type": "string",
@@ -691,19 +748,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"properties": {
-									"contentHTML": {
-										"type": "string"
-									},
-									"contentText": {
-										"type": "string"
-									}
-								},
-								"required": [
-									"contentHTML",
-									"contentText"
-								],
-								"type": "object"
+								"$ref": "#/components/schemas/SetNoteContentParams"
 							}
 						}
 					}
@@ -810,23 +855,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"properties": {
-									"encryption": {
-										"$ref": "#/components/schemas/Encryption"
-									},
-									"contentText": {
-										"type": "string"
-									},
-									"contentHTML": {
-										"type": "string"
-									}
-								},
-								"required": [
-									"encryption",
-									"contentText",
-									"contentHTML"
-								],
-								"type": "object"
+								"$ref": "#/components/schemas/SetNoteEncryptionParams"
 							}
 						}
 					}

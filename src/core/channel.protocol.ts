@@ -1,3 +1,5 @@
+import { SetNoteContentParams } from '../data/notes/notes.data.types';
+
 export enum NoteUpdateEvent {
 	/** New note to show in workspace event */
 	NEW = 'NEW',
@@ -19,15 +21,12 @@ export interface NoteUpdate {
 /**
  * Incoming (from FE->BE) note update structure (including the plain text content)
  */
-export interface IncomingNoteUpdate extends NoteUpdate {
-	contentText: string;
-	contentHTML: string;
-}
+export interface FrontToBackNoteUpdate extends NoteUpdate, SetNoteContentParams {}
 
 /**
  * Outgoing (from BE->FE) note update structure
  */
-export interface OutgoingNoteUpdate extends NoteUpdate {
+export interface BackToFrontNoteUpdate extends NoteUpdate {
 	event: NoteUpdateEvent;
 	name?: string;
 	contentHTML?: string;
