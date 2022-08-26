@@ -31,6 +31,7 @@ export interface NotesUpdateDebounceInfo {
 	lastState: {
 		contentText: string;
 		contentHTML: string;
+		guardNonce?: string;
 	};
 }
 
